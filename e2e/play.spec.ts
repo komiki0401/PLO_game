@@ -1,6 +1,13 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, type Page } from "@playwright/test";
+const pageErrors = new WeakMap<Page, string[]>();
+test.afterEach(async ({ page }) => {
+  expect(pageErrors.get(page) ?? []).toEqual([]);
+});
 test.setTimeout(60000);
 test.beforeEach(async ({ page }) => {
+  const errors: string[] = [];
+  pageErrors.set(page, errors);
+  page.on("pageerror", (e) => errors.push(e.message));
   await page.addInitScript(() => {
     localStorage.setItem(
       "plo-settings",
@@ -102,6 +109,13 @@ test("showdown reveals exactly five winning cards on A, pauses, then reveals B",
   ]);
   await expect(verdict.locator("strong span")).not.toBeEmpty();
   await expect(page.locator(".card.lit")).toHaveCount(5);
+  await expect(
+    page.locator(".showdown .card:not(.lit):not(.empty)"),
+  ).toHaveCount(15);
+  await expect(
+    page.locator(".showdown .card:not(.lit):not(.empty)").first(),
+  ).toHaveCSS("filter", "brightness(0.28) saturate(0.45)");
+  await expect(page.locator(".card.lit").first()).toHaveCSS("filter", "none");
   await expect(page.locator(".hole-cards .card.lit")).toHaveCount(2);
   await expect(
     page.locator(".board-row").nth(0).locator(".card.lit"),
@@ -117,6 +131,13 @@ test("showdown reveals exactly five winning cards on A, pauses, then reveals B",
   await expect(verdict).toHaveAttribute("data-board", "1");
   await expect(verdict.locator("strong span")).not.toBeEmpty();
   await expect(page.locator(".card.lit")).toHaveCount(5);
+  await expect(
+    page.locator(".showdown .card:not(.lit):not(.empty)"),
+  ).toHaveCount(15);
+  await expect(
+    page.locator(".showdown .card:not(.lit):not(.empty)").first(),
+  ).toHaveCSS("filter", "brightness(0.28) saturate(0.45)");
+  await expect(page.locator(".card.lit").first()).toHaveCSS("filter", "none");
   await expect(page.locator(".hole-cards .card.lit")).toHaveCount(2);
   await expect(
     page.locator(".board-row").nth(0).locator(".card.lit"),
@@ -130,6 +151,13 @@ test("showdown reveals exactly five winning cards on A, pauses, then reveals B",
   await page.locator(".board-label").nth(0).click();
   await expect(verdict).toHaveAttribute("data-board", "0");
   await expect(page.locator(".card.lit")).toHaveCount(5);
+  await expect(
+    page.locator(".showdown .card:not(.lit):not(.empty)"),
+  ).toHaveCount(15);
+  await expect(
+    page.locator(".showdown .card:not(.lit):not(.empty)").first(),
+  ).toHaveCSS("filter", "brightness(0.28) saturate(0.45)");
+  await expect(page.locator(".card.lit").first()).toHaveCSS("filter", "none");
 });
 
 test("bundled female voice plays A then B, waits for speech, and mutes immediately", async ({
@@ -204,4 +232,20 @@ test("bundled female voice plays A then B, waits for speech, and mutes immediate
     timeout: 10000,
   });
   expect(errors).toEqual([]);
+});
+
+test("changing seat count during a CPU turn safely starts a new session", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await expect(page.locator(".seat-3.active")).toBeVisible({ timeout: 10000 });
+  await page.clock.install();
+  await page.clock.pauseAt(new Date(Date.now() + 10));
+  await page.getByRole("button", { name: "設定", exact: true }).click();
+  await page.getByLabel("プレイヤー人数").selectOption("2");
+  await page.getByRole("button", { name: "設定を適用して開始 →" }).click();
+  await expect(page.locator(".seat")).toHaveCount(2);
+  await expect(page.locator(".error")).toHaveCount(0);
+  await expect(page.locator("main")).not.toHaveClass("showdown");
+  await expect(page.locator(".card").first()).toHaveCSS("filter", "none");
 });

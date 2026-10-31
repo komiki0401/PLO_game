@@ -192,6 +192,8 @@ export default function App() {
     previousAudioGame.current = game;
     if (
       !previous ||
+      game.players.length !== previous.players.length ||
+      game.initialTotal !== previous.initialTotal ||
       game.hand !== previous.hand ||
       (previous.done && !game.done)
     ) {
@@ -297,6 +299,7 @@ export default function App() {
   function save() {
     try {
       const fresh = create(draft);
+      previousAudioGame.current = null;
       setSettings(draft);
       setGame(fresh);
       before.current = draft.stack;
@@ -311,6 +314,7 @@ export default function App() {
   }
   return (
     <main
+      className={view.done && activeStep ? "showdown" : undefined}
       onPointerDownCapture={() => unlockAudio()}
       onKeyDownCapture={() => unlockAudio()}
       style={{ "--motion": `${0.5 / settings.speed}s` } as React.CSSProperties}

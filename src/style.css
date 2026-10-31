@@ -1546,3 +1546,8 @@ button:disabled {
     min-height: 38px;
   }
 }
+/* Keep only the selected Omaha five-card hand bright during showdown. */
+.showdown .card:not(.lit):not(.empty) {
+  filter: brightness(0.28) saturate(0.45);
+  box-shadow: none;
+}
