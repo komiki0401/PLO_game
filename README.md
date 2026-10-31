@@ -52,3 +52,7 @@ EASYは緩い参加判断、NORMAL/HARDはランアウトのMonte Carlo推定と
 `.github/workflows/pages.yml` がmainへのpush時にユニットテスト・ビルド・ブラウザテストを実行し、すべて通った場合だけデプロイします。PRでは検証のみ実行します。Viteの相対baseによりリポジトリ配下で動作します。
 
 初回のみGitHubリポジトリの **Settings → Pages → Build and deployment → Source → GitHub Actions** を選択してください。mainへpushし、Actionsの「Test and deploy to GitHub Pages」が成功すると公開されます。標準の公開先は `https://komiki0401.github.io/PLO_game/` です。URLの利用可能性はデプロイ完了後に確認してください。
+
+## ショーダウン表示
+
+BOARD A の勝利ハンド（ホール2枚＋ボード3枚）と勝者・役名を表示してから、BOARD B に進みます。標準では各表示を2.6秒保持し、高速設定でも最低1.6秒は表示します。同点・サイドポットは各勝利ハンドを順番に表示します。すべての結果を表示した後にチップ獲得演出と次のハンド操作を表示し、結果カードやボード名からハンドを見直せます。

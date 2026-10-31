@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   create,
   act,
@@ -156,11 +156,55 @@ export default function App() {
     scoop =
       view.awards.length > 0 &&
       view.awards.every((a) => a.winners.length === 1 && a.winners[0] === sole);
-  const highlighted = new Set(
-    view.awards
-      .filter((a) => a.board === boardFocus)
-      .flatMap((a) => a.winners.flatMap((id) => a.hands[id].cards)),
+  const steps = useMemo(
+    () =>
+      view.done
+        ? [...view.awards]
+            .sort((a, b) => a.board - b.board || a.pot - b.pot)
+            .flatMap((award) =>
+              award.winners.map((winner) => ({
+                award,
+                winner,
+                hand: award.hands[winner],
+              })),
+            )
+        : [],
+    [view],
   );
+  const [presentation, setPresentation] = useState<{
+    view: State | null;
+    index: number;
+    complete: boolean;
+  }>({ view: null, index: 0, complete: false });
+  const [selectedStep, setSelectedStep] = useState<number | null>(null);
+  useEffect(() => {
+    setSelectedStep(null);
+    if (!steps.length) return;
+    setPresentation({ view, index: 0, complete: false });
+    let index = 0;
+    const timer = setInterval(
+      () => {
+        index++;
+        setPresentation({
+          view,
+          index: Math.min(index, steps.length - 1),
+          complete: index >= steps.length,
+        });
+        if (index >= steps.length) clearInterval(timer);
+      },
+      Math.max(1600, 2600 / settings.speed),
+    );
+    return () => clearInterval(timer);
+  }, [view, steps, settings.speed]);
+  const presentationIndex = presentation.view === view ? presentation.index : 0;
+  const showdownComplete =
+    !steps.length || (presentation.view === view && presentation.complete);
+  const activeStep =
+    steps[
+      showdownComplete ? (selectedStep ?? presentationIndex) : presentationIndex
+    ];
+  const activeBoard = activeStep?.award.board ?? boardFocus;
+  const highlighted = new Set(activeStep?.hand.cards ?? []);
   const sessionOver = game.players.filter((p) => p.stack > 0).length < 2;
   function next() {
     try {
@@ -259,13 +303,18 @@ export default function App() {
             </div>
             {view.boards.map((board, b) => (
               <div
-                className={`board-row ${boardFocus === b ? "focused" : ""}`}
+                className={`board-row ${activeBoard === b ? "focused" : ""}`}
                 key={b}
               >
                 <button
                   className="board-label"
-                  onClick={() => setBoardFocus(b)}
-                  aria-pressed={boardFocus === b}
+                  disabled={view.done && !showdownComplete}
+                  onClick={() => {
+                    setBoardFocus(b);
+                    const i = steps.findIndex((step) => step.award.board === b);
+                    if (i >= 0) setSelectedStep(i);
+                  }}
+                  aria-pressed={activeBoard === b}
                 >
                   <span>BOARD</span>
                   <b>{"AB"[b]}</b>
@@ -280,7 +329,7 @@ export default function App() {
                       card={board[i]}
                       lit={
                         view.done &&
-                        boardFocus === b &&
+                        activeBoard === b &&
                         highlighted.has(board[i])
                       }
                     />
@@ -292,7 +341,7 @@ export default function App() {
         </div>
         {view.players.map((p, i) => {
           const shown = i === 0 || (view.done && !p.folded),
-            winning = (view.payouts[p.id] ?? 0) > 0;
+            winning = showdownComplete && (view.payouts[p.id] ?? 0) > 0;
           return (
             <div
               key={p.id}
@@ -306,7 +355,13 @@ export default function App() {
                     {i === 0 && <small> YOU</small>}
                   </b>
                   <strong>
-                    {fmt(p.stack)} <span>CHIPS</span>
+                    {fmt(
+                      p.stack -
+                        (view.done && !showdownComplete
+                          ? (view.payouts[p.id] ?? 0)
+                          : 0),
+                    )}{" "}
+                    <span>CHIPS</span>
                   </strong>
                 </div>
                 {view.dealer === i && (
@@ -350,6 +405,28 @@ export default function App() {
           );
         })}
       </section>
+      {view.done && activeStep && (
+        <section
+          className="showdown-verdict"
+          aria-live="polite"
+          data-board={activeBoard}
+        >
+          <span className="verdict-board">BOARD {"AB"[activeBoard]}</span>
+          <div>
+            <small>
+              {activeStep.award.pot === 0
+                ? "MAIN POT"
+                : `SIDE POT ${activeStep.award.pot}`}{" "}
+              · {activeStep.award.winners.length > 1 ? "同点勝利" : "WINNER"}
+            </small>
+            <strong>
+              {view.players[activeStep.winner].name}{" "}
+              <span>— {names[activeStep.hand.category]}</span>
+            </strong>
+          </div>
+          <span className="verdict-note">ホール2枚 ＋ ボード3枚</span>
+        </section>
+      )}
       <section className="action-panel" aria-live="polite">
         {replay ? (
           <div className="end-actions">
@@ -375,6 +452,26 @@ export default function App() {
             <button className="primary" onClick={() => setReplay(null)}>
               ライブテーブルに戻る →
             </button>
+          </div>
+        ) : game.done && !showdownComplete ? (
+          <div className="end-actions">
+            <div>
+              <span className="eyebrow">
+                SHOWDOWN · BOARD {"AB"[activeBoard]}
+              </span>
+              <h2>
+                {names[activeStep.hand.category]}
+                <small>
+                  {view.players[activeStep.winner].name} の最強ハンド
+                </small>
+              </h2>
+            </div>
+            <span className="showdown-wait">
+              {steps[presentationIndex + 1]?.award.board !== activeBoard &&
+              presentationIndex + 1 < steps.length
+                ? "続いて BOARD B を判定します…"
+                : "勝利ハンドを表示しています…"}
+            </span>
           </div>
         ) : game.done ? (
           <div className="end-actions">
@@ -538,23 +635,29 @@ export default function App() {
       )}
       {view.done && view.awards.length > 0 && (
         <section className="results">
-          {view.awards.map((a, i) => (
-            <button
-              key={i}
-              onClick={() => setBoardFocus(a.board)}
-              className={boardFocus === a.board ? "selected" : ""}
-            >
-              <small>
-                {a.pot === 0 ? "MAIN POT" : `SIDE POT ${a.pot}`} · BOARD{" "}
-                {"AB"[a.board]} · {fmt(a.amount)}
-              </small>
-              <b>{a.winners.map((id) => view.players[id].name).join(" / ")}</b>
-              <span>
-                {names[a.hands[a.winners[0]].category]}
-                {a.winners.length > 1 ? " · TIE" : ""}
-              </span>
-            </button>
-          ))}
+          {steps
+            .slice(0, showdownComplete ? steps.length : presentationIndex + 1)
+            .map((step, i) => (
+              <button
+                key={i}
+                disabled={!showdownComplete}
+                onClick={() => setSelectedStep(i)}
+                className={activeStep === step ? "selected" : ""}
+                data-board={step.award.board}
+              >
+                <small>
+                  {step.award.pot === 0
+                    ? "MAIN POT"
+                    : `SIDE POT ${step.award.pot}`}{" "}
+                  · BOARD {"AB"[step.award.board]} · {fmt(step.award.amount)}
+                </small>
+                <b>{view.players[step.winner].name}</b>
+                <span>
+                  {names[step.hand.category]}
+                  {step.award.winners.length > 1 ? " · TIE" : ""}
+                </span>
+              </button>
+            ))}
         </section>
       )}
       <div className="lower-grid">

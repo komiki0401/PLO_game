@@ -77,3 +77,50 @@ test("bet controls, rules, and heads-up settings", async ({ page }) => {
   await page.locator("button.raise").click();
   await expect(page.locator(".error")).toHaveCount(0);
 });
+
+test("showdown reveals exactly five winning cards on A, pauses, then reveals B", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "設定", exact: true }).click();
+  await page.getByLabel("プレイヤー人数").selectOption("2");
+  await page.getByLabel("初期スタック").fill("100");
+  await page.getByLabel("ボムポットアンティ").fill("100");
+  await page.getByLabel("アニメーション速度").selectOption("4");
+  await page.clock.install();
+  await page.clock.pauseAt(new Date(Date.now() + 1000));
+  await page.getByRole("button", { name: "設定を適用して開始 →" }).click();
+  const verdict = page.locator(".showdown-verdict");
+  await expect(verdict).toHaveAttribute("data-board", "0");
+  await expect(page.locator(".seat-top strong")).toHaveText(["0 CHIPS", "0 CHIPS"]);
+  await expect(verdict.locator("strong span")).not.toBeEmpty();
+  await expect(page.locator(".card.lit")).toHaveCount(5);
+  await expect(page.locator(".hole-cards .card.lit")).toHaveCount(2);
+  await expect(
+    page.locator(".board-row").nth(0).locator(".card.lit"),
+  ).toHaveCount(3);
+  await expect(
+    page.locator(".board-row").nth(1).locator(".card.lit"),
+  ).toHaveCount(0);
+  await expect(page.locator('.results [data-board="1"]')).toHaveCount(0);
+  await expect(page.locator(".action-panel .primary")).toHaveCount(0);
+  await page.clock.runFor(1599);
+  await expect(verdict).toHaveAttribute("data-board", "0");
+  await page.clock.runFor(1);
+  await expect(verdict).toHaveAttribute("data-board", "1");
+  await expect(verdict.locator("strong span")).not.toBeEmpty();
+  await expect(page.locator(".card.lit")).toHaveCount(5);
+  await expect(page.locator(".hole-cards .card.lit")).toHaveCount(2);
+  await expect(
+    page.locator(".board-row").nth(0).locator(".card.lit"),
+  ).toHaveCount(0);
+  await expect(
+    page.locator(".board-row").nth(1).locator(".card.lit"),
+  ).toHaveCount(3);
+  await expect(page.locator(".action-panel .primary")).toHaveCount(0);
+  await page.clock.runFor(1600);
+  await expect(page.locator(".action-panel .primary")).toBeVisible();
+  await page.locator(".board-label").nth(0).click();
+  await expect(verdict).toHaveAttribute("data-board", "0");
+  await expect(page.locator(".card.lit")).toHaveCount(5);
+});
