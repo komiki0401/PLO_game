@@ -13,6 +13,13 @@ import { cardText, suit, type Card } from "./game/cards";
 import { names } from "./game/evaluate";
 import type { Action } from "./game/betting";
 const fmt = (n: number) => n.toLocaleString("en-US");
+const positions: Record<number, number[]> = {
+  2: [0, 3],
+  3: [0, 2, 4],
+  4: [0, 1, 3, 5],
+  5: [0, 1, 2, 4, 5],
+  6: [0, 1, 2, 3, 4, 5],
+};
 const loadSettings = (): Settings => {
   try {
     return {
@@ -77,7 +84,7 @@ export default function App() {
     replays = useRef(new WeakMap<State, State[]>());
   const recorded = useRef<State | null>(null),
     audio = useRef<AudioContext | null>(null),
-    before = useRef(game.players[0].stack + game.players[0].total);
+    before = useRef(settings.stack);
   function sound() {
     if (!settings.sound) return;
     try {
@@ -98,7 +105,8 @@ export default function App() {
   }
   function dispatch(a: Action) {
     try {
-      setGame((s) => act(s, a));
+      if (game.done || game.actor !== 0) return;
+      setGame(act(game, a));
       sound();
       setError("");
     } catch (e) {
@@ -288,7 +296,7 @@ export default function App() {
           return (
             <div
               key={p.id}
-              className={`seat seat-${i} ${view.actor === i ? "active" : ""} ${p.folded ? "folded" : ""} ${i === 0 ? "human" : ""} ${winning ? "winner" : ""}`}
+              className={`seat seat-${positions[view.players.length][i]} ${view.actor === i ? "active" : ""} ${p.folded ? "folded" : ""} ${i === 0 ? "human" : ""} ${winning ? "winner" : ""}`}
             >
               <div className="seat-top">
                 <span className="avatar">{i === 0 ? "♠" : p.name[0]}</span>

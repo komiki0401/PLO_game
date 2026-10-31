@@ -67,6 +67,7 @@ test("bet controls, rules, and heads-up settings", async ({ page }) => {
   await page.getByLabel("アニメーション速度").selectOption("4");
   await page.getByRole("button", { name: "設定を適用して開始 →" }).click();
   await expect(page.locator(".seat")).toHaveCount(2);
+  await expect(page.locator(".seat-3")).toHaveCount(1);
   await expect(
     page.getByRole("button", { name: "Pot", exact: true }),
   ).toBeVisible({ timeout: 10000 });
