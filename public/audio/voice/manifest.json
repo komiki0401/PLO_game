@@ -1,0 +1,98 @@
+{
+  "model": "hexgrad/Kokoro-82M",
+  "revision": "f3ff3571791e39611d31c381e3a41a3af07b4987",
+  "voice": "jf_alpha",
+  "license": "Apache-2.0",
+  "clips": [
+    {
+      "file": "a-0.mp3",
+      "text": "ボードエー。ハイカード。",
+      "duration": 2.136
+    },
+    {
+      "file": "a-1.mp3",
+      "text": "ボードエー。ワンペア。",
+      "duration": 2.016
+    },
+    {
+      "file": "a-2.mp3",
+      "text": "ボードエー。ツーペア。",
+      "duration": 1.92
+    },
+    {
+      "file": "a-3.mp3",
+      "text": "ボードエー。スリーカード。",
+      "duration": 2.304
+    },
+    {
+      "file": "a-4.mp3",
+      "text": "ボードエー。ストレート。",
+      "duration": 2.136
+    },
+    {
+      "file": "a-5.mp3",
+      "text": "ボードエー。フラッシュ。",
+      "duration": 2.04
+    },
+    {
+      "file": "a-6.mp3",
+      "text": "ボードエー。フルハウス。",
+      "duration": 2.16
+    },
+    {
+      "file": "a-7.mp3",
+      "text": "ボードエー。フォーカード。",
+      "duration": 2.136
+    },
+    {
+      "file": "a-8.mp3",
+      "text": "ボードエー。ストレートフラッシュ。",
+      "duration": 2.616
+    },
+    {
+      "file": "b-0.mp3",
+      "text": "ボードビー。ハイカード。",
+      "duration": 2.256
+    },
+    {
+      "file": "b-1.mp3",
+      "text": "ボードビー。ワンペア。",
+      "duration": 2.112
+    },
+    {
+      "file": "b-2.mp3",
+      "text": "ボードビー。ツーペア。",
+      "duration": 2.136
+    },
+    {
+      "file": "b-3.mp3",
+      "text": "ボードビー。スリーカード。",
+      "duration": 2.448
+    },
+    {
+      "file": "b-4.mp3",
+      "text": "ボードビー。ストレート。",
+      "duration": 2.256
+    },
+    {
+      "file": "b-5.mp3",
+      "text": "ボードビー。フラッシュ。",
+      "duration": 2.112
+    },
+    {
+      "file": "b-6.mp3",
+      "text": "ボードビー。フルハウス。",
+      "duration": 2.256
+    },
+    {
+      "file": "b-7.mp3",
+      "text": "ボードビー。フォーカード。",
+      "duration": 2.256
+    },
+    {
+      "file": "b-8.mp3",
+      "text": "ボードビー。ストレートフラッシュ。",
+      "duration": 2.664
+    }
+  ]
+}

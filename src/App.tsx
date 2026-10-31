@@ -12,6 +12,7 @@ import { cpu } from "./game/cpu";
 import { cardText, suit, type Card } from "./game/cards";
 import { names } from "./game/evaluate";
 import type { Action } from "./game/betting";
+import { TableAudio } from "./audio/tableAudio";
 const fmt = (n: number) => n.toLocaleString("en-US");
 const positions: Record<number, number[]> = {
   2: [0, 3],
@@ -83,31 +84,70 @@ export default function App() {
   const timeline = useRef<State[]>([]),
     replays = useRef(new WeakMap<State, State[]>());
   const recorded = useRef<State | null>(null),
-    audio = useRef<AudioContext | null>(null),
     before = useRef(settings.stack);
-  function sound() {
-    if (!settings.sound) return;
-    try {
-      const ctx = audio.current ?? (audio.current = new AudioContext());
-      void ctx.resume();
-      const o = ctx.createOscillator(),
-        g = ctx.createGain();
-      o.connect(g);
-      g.connect(ctx.destination);
-      o.frequency.setValueAtTime(600, ctx.currentTime);
-      g.gain.setValueAtTime(0.025, ctx.currentTime);
-      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.13);
-      o.start();
-      o.stop(ctx.currentTime + 0.14);
-    } catch {
-      /* Audio is optional on unsupported browsers. */
-    }
+  const voicePlayer = useRef<HTMLAudioElement | null>(null),
+    tableAudio = useRef<TableAudio | null>(null),
+    previousAudioGame = useRef<State | null>(null);
+  const [audioReady, setAudioReady] = useState(false),
+    [audioError, setAudioError] = useState("");
+  useEffect(() => {
+    if (!voicePlayer.current) return;
+    const controller = new TableAudio(voicePlayer.current, () => {
+      setAudioReady(false);
+      setAudioError(
+        "音声を再生できません。音声ボタンを押して再開してください。",
+      );
+    });
+    tableAudio.current = controller;
+    const hide = () => {
+      if (document.hidden) controller.stopVoice();
+    };
+    document.addEventListener("visibilitychange", hide);
+    return () => {
+      controller.dispose();
+      document.removeEventListener("visibilitychange", hide);
+    };
+  }, []);
+  useEffect(() => {
+    tableAudio.current?.configure(settings);
+  }, [settings.sound, settings.voice, settings.volume]);
+  function unlockAudio(force = false) {
+    if (!force && !settings.sound && !settings.voice) return;
+    void tableAudio.current?.unlock().then((ok) => {
+      if (ok) {
+        setAudioReady(true);
+        setAudioError("");
+      }
+    });
+  }
+  function enableAudio() {
+    const updated = {
+      ...settings,
+      sound: true,
+      voice: true,
+      volume: settings.volume || 0.65,
+    };
+    setSettings(updated);
+    localStorage.setItem("plo-settings", JSON.stringify(updated));
+    tableAudio.current?.configure(updated);
+    void tableAudio.current?.unlock().then((ok) => {
+      if (ok) {
+        setAudioReady(true);
+        setAudioError("");
+        tableAudio.current?.cue("check");
+      }
+    });
+  }
+  function muteAudio() {
+    const updated = { ...settings, sound: false, voice: false };
+    setSettings(updated);
+    tableAudio.current?.configure(updated);
+    localStorage.setItem("plo-settings", JSON.stringify(updated));
   }
   function dispatch(a: Action) {
     try {
       if (game.done || game.actor !== 0) return;
       setGame(act(game, a));
-      sound();
       setError("");
     } catch (e) {
       setError((e as Error).message);
@@ -147,6 +187,33 @@ export default function App() {
       return n;
     });
   }, [game]);
+  useEffect(() => {
+    const previous = previousAudioGame.current;
+    previousAudioGame.current = game;
+    if (
+      !previous ||
+      game.hand !== previous.hand ||
+      (previous.done && !game.done)
+    ) {
+      tableAudio.current?.cue("deal");
+      return;
+    }
+    if (previous === game) return;
+    if (game.boards[0].length !== previous.boards[0].length)
+      tableAudio.current?.cue("board");
+    else if (previous.actor >= 0) {
+      const p = game.players[previous.actor],
+        before = previous.players[previous.actor];
+      tableAudio.current?.cue(
+        p.folded && !before.folded
+          ? "fold"
+          : p.total > before.total
+            ? "chips"
+            : "check",
+      );
+    }
+    if (game.done && !game.awards.length) tableAudio.current?.cue("win");
+  }, [game]);
   const view = replay ?? game,
     pot = view.players.reduce((n, p) => n + p.total, 0),
     humanTurn = !game.done && game.actor === 0;
@@ -180,21 +247,34 @@ export default function App() {
   useEffect(() => {
     setSelectedStep(null);
     if (!steps.length) return;
-    setPresentation({ view, index: 0, complete: false });
-    let index = 0;
-    const timer = setInterval(
-      () => {
-        index++;
-        setPresentation({
-          view,
-          index: Math.min(index, steps.length - 1),
-          complete: index >= steps.length,
-        });
-        if (index >= steps.length) clearInterval(timer);
-      },
-      Math.max(1600, 2600 / settings.speed),
-    );
-    return () => clearInterval(timer);
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    function show(index: number) {
+      setPresentation({ view, index, complete: false });
+      tableAudio.current?.cue("reveal");
+      const voice =
+        tableAudio.current?.announce(
+          steps[index].award.board,
+          steps[index].hand.category,
+        ) ?? Promise.resolve();
+      const pause = new Promise<void>((resolve) => {
+        timer = setTimeout(resolve, Math.max(1600, 2600 / settings.speed));
+      });
+      void Promise.all([voice, pause]).then(() => {
+        if (cancelled) return;
+        if (index + 1 < steps.length) show(index + 1);
+        else {
+          setPresentation({ view, index, complete: true });
+          tableAudio.current?.cue(scoop ? "scoop" : "win");
+        }
+      });
+    }
+    show(0);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+      tableAudio.current?.stopVoice();
+    };
   }, [view, steps, settings.speed]);
   const presentationIndex = presentation.view === view ? presentation.index : 0;
   const showdownComplete =
@@ -210,7 +290,6 @@ export default function App() {
     try {
       before.current = game.players[0].stack;
       setGame(nextHand(game));
-      sound();
     } catch (e) {
       setError((e as Error).message);
     }
@@ -232,8 +311,17 @@ export default function App() {
   }
   return (
     <main
+      onPointerDownCapture={() => unlockAudio()}
+      onKeyDownCapture={() => unlockAudio()}
       style={{ "--motion": `${0.5 / settings.speed}s` } as React.CSSProperties}
     >
+      <audio
+        className="voice-player"
+        ref={voicePlayer}
+        preload="auto"
+        hidden
+        aria-label="女性ボイス読み上げ"
+      />
       <header>
         <a className="brand" href="#">
           <span className="brand-icon">♠</span>
@@ -261,6 +349,15 @@ export default function App() {
           </button>
         </nav>
       </header>
+      <div className="audio-bar">
+        <span>TABLE AUDIO · SE ＆ 日本語女性ボイス</span>
+        {!audioReady || (!settings.sound && !settings.voice) ? (
+          <button onClick={enableAudio}>🔊 音声を有効にする</button>
+        ) : (
+          <button onClick={muteAudio}>🔇 ミュート</button>
+        )}
+        {audioError && <small role="status">{audioError}</small>}
+      </div>
       <div className="session-bar">
         <div>
           <span className="eyebrow">YOUR PRIVATE TABLE</span>
@@ -312,7 +409,13 @@ export default function App() {
                   onClick={() => {
                     setBoardFocus(b);
                     const i = steps.findIndex((step) => step.award.board === b);
-                    if (i >= 0) setSelectedStep(i);
+                    if (i >= 0) {
+                      setSelectedStep(i);
+                      void tableAudio.current?.announce(
+                        steps[i].award.board,
+                        steps[i].hand.category,
+                      );
+                    }
                   }}
                   aria-pressed={activeBoard === b}
                 >
@@ -641,7 +744,13 @@ export default function App() {
               <button
                 key={i}
                 disabled={!showdownComplete}
-                onClick={() => setSelectedStep(i)}
+                onClick={() => {
+                  setSelectedStep(i);
+                  void tableAudio.current?.announce(
+                    step.award.board,
+                    step.hand.category,
+                  );
+                }}
                 className={activeStep === step ? "selected" : ""}
                 data-board={step.award.board}
               >
@@ -820,7 +929,7 @@ export default function App() {
                 </select>
               </label>
               <label>
-                サウンド
+                サウンド（SE）
                 <select
                   value={String(draft.sound)}
                   onChange={(e) =>
@@ -830,6 +939,32 @@ export default function App() {
                   <option value="false">OFF</option>
                   <option value="true">ON</option>
                 </select>
+              </label>
+              <label>
+                女性ボイス（役の読み上げ）
+                <select
+                  value={String(draft.voice)}
+                  onChange={(e) =>
+                    setDraft({ ...draft, voice: e.target.value === "true" })
+                  }
+                >
+                  <option value="true">ON</option>
+                  <option value="false">OFF</option>
+                </select>
+              </label>
+              <label>
+                音量 {Math.round(draft.volume * 100)}%
+                <input
+                  aria-label="音量"
+                  type="range"
+                  min="0"
+                  max="1"
+                  step="0.05"
+                  value={draft.volume}
+                  onChange={(e) =>
+                    setDraft({ ...draft, volume: Number(e.target.value) })
+                  }
+                />
               </label>
             </div>
             <button className="primary" onClick={save}>

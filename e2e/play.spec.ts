@@ -2,6 +2,10 @@ import { test, expect } from "@playwright/test";
 test.setTimeout(60000);
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => {
+    localStorage.setItem(
+      "plo-settings",
+      JSON.stringify({ sound: false, voice: false }),
+    );
     let seed = 42;
     Math.random = () => {
       seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
@@ -92,7 +96,10 @@ test("showdown reveals exactly five winning cards on A, pauses, then reveals B",
   await page.getByRole("button", { name: "設定を適用して開始 →" }).click();
   const verdict = page.locator(".showdown-verdict");
   await expect(verdict).toHaveAttribute("data-board", "0");
-  await expect(page.locator(".seat-top strong")).toHaveText(["0 CHIPS", "0 CHIPS"]);
+  await expect(page.locator(".seat-top strong")).toHaveText([
+    "0 CHIPS",
+    "0 CHIPS",
+  ]);
   await expect(verdict.locator("strong span")).not.toBeEmpty();
   await expect(page.locator(".card.lit")).toHaveCount(5);
   await expect(page.locator(".hole-cards .card.lit")).toHaveCount(2);
@@ -123,4 +130,78 @@ test("showdown reveals exactly five winning cards on A, pauses, then reveals B",
   await page.locator(".board-label").nth(0).click();
   await expect(verdict).toHaveAttribute("data-board", "0");
   await expect(page.locator(".card.lit")).toHaveCount(5);
+});
+
+test("bundled female voice plays A then B, waits for speech, and mutes immediately", async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    const Original = window.AudioContext;
+    const original = Original.prototype.createOscillator;
+    (window as unknown as { seCount: number }).seCount = 0;
+    Original.prototype.createOscillator = function () {
+      (window as unknown as { seCount: number }).seCount++;
+      return original.call(this);
+    };
+  });
+  const errors: string[] = [];
+  page.on("pageerror", (e) => errors.push(e.message));
+  await page.goto("/");
+  await page.getByRole("button", { name: "音声を有効にする" }).click();
+  await expect(page.getByRole("button", { name: "ミュート" })).toBeVisible();
+  await page.getByRole("button", { name: "設定", exact: true }).click();
+  await page.getByLabel("プレイヤー人数").selectOption("2");
+  await page.getByLabel("初期スタック").fill("100");
+  await page.getByLabel("ボムポットアンティ").fill("100");
+  await page.getByLabel("アニメーション速度").selectOption("4");
+  await expect(page.getByLabel("女性ボイス（役の読み上げ）")).toHaveValue(
+    "true",
+  );
+  await page.evaluate(() => {
+    const player = document.querySelector<HTMLAudioElement>(".voice-player")!;
+    const trace = window as unknown as { spoken: string[] };
+    trace.spoken = [];
+    player.addEventListener("ended", () =>
+      trace.spoken.push(player.currentSrc),
+    );
+  });
+  await page.getByRole("button", { name: "設定を適用して開始 →" }).click();
+  const voice = page.locator(".voice-player"),
+    verdict = page.locator(".showdown-verdict");
+  await expect(verdict).toHaveAttribute("data-board", "0");
+  await expect(voice).toHaveJSProperty("paused", false);
+  await expect
+    .poll(() => voice.evaluate((el: HTMLAudioElement) => el.currentSrc))
+    .toMatch(/\/a-\d.mp3$/);
+  await expect
+    .poll(() => voice.evaluate((el: HTMLAudioElement) => el.currentTime))
+    .toBeGreaterThan(0.1);
+  // Advancing the minimum visual hold must not interrupt a longer voice clip.
+  await expect(verdict).toHaveAttribute("data-board", "1", { timeout: 12000 });
+  expect(
+    await page.evaluate(() =>
+      (window as unknown as { spoken: string[] }).spoken.some((src) =>
+        /\/a-\d.mp3$/.test(src),
+      ),
+    ),
+  ).toBe(true);
+  await expect
+    .poll(() => voice.evaluate((el: HTMLAudioElement) => el.currentSrc))
+    .toMatch(/\/b-\d.mp3$/);
+  expect(
+    await page.evaluate(
+      () => (window as unknown as { seCount: number }).seCount,
+    ),
+  ).toBeGreaterThan(0);
+  await page.getByRole("button", { name: "ミュート" }).click();
+  await expect(voice).toHaveJSProperty("paused", true);
+  const prefs = await page.evaluate(() =>
+    JSON.parse(localStorage.getItem("plo-settings")!),
+  );
+  expect(prefs.sound).toBe(false);
+  expect(prefs.voice).toBe(false);
+  await expect(page.locator(".action-panel .primary")).toBeVisible({
+    timeout: 10000,
+  });
+  expect(errors).toEqual([]);
 });

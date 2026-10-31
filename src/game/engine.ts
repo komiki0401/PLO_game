@@ -15,6 +15,8 @@ export type Settings = {
   difficulty: "EASY" | "NORMAL" | "HARD";
   speed: number;
   sound: boolean;
+  voice: boolean;
+  volume: number;
 };
 export const defaults: Settings = {
   count: 6,
@@ -22,7 +24,9 @@ export const defaults: Settings = {
   ante: 100,
   difficulty: "NORMAL",
   speed: 1,
-  sound: false,
+  sound: true,
+  voice: true,
+  volume: 0.65,
 };
 export type Player = Bettor & {
   id: number;

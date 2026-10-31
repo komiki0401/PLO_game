@@ -1512,3 +1512,37 @@ button:disabled {
     font-size: 11px;
   }
 }
+.audio-bar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 16px;
+  color: #9cb6a7;
+  flex-wrap: wrap;
+}
+.audio-bar > span {
+  font-size: 8px;
+  letter-spacing: 1.7px;
+}
+.audio-bar button {
+  font-size: 11px;
+  padding: 8px 12px;
+  color: #e9d6a7;
+  border-color: #d7bc7b50;
+}
+.audio-bar small {
+  font-size: 10px;
+  color: #e1bf8e;
+}
+@media (max-width: 780px) {
+  .audio-bar {
+    gap: 8px;
+  }
+  .audio-bar > span {
+    font-size: 7px;
+    letter-spacing: 1px;
+  }
+  .audio-bar button {
+    min-height: 38px;
+  }
+}
