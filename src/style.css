@@ -3648,3 +3648,56 @@ header {
 @media (max-width: 780px) and (min-height: 621px) and (max-height: 760px) {
   .game-viewport .center-game { top: calc(50% - 12px); }
 }
+
+/* A single gold celebration after both board results, without blocking controls. */
+.scoop-celebration {
+  position: absolute; inset: 70px 0 110px; z-index: 14;
+  display: grid; place-items: center; overflow: hidden; pointer-events: none;
+  border-radius: 24px;
+  background: radial-gradient(ellipse at center, #031511d9, #03151188 50%, transparent 75%);
+  animation: scoop-stage 2.8s both;
+}
+.scoop-rays {
+  position: absolute; width: min(95vw, 700px); aspect-ratio: 1;
+  background: repeating-conic-gradient(from 0deg, transparent 0deg 12deg, #f4c65d1f 13deg 18deg, transparent 20deg 30deg);
+  mask-image: radial-gradient(circle, black 5%, transparent 68%);
+  animation: scoop-rays 10s linear infinite;
+}
+.scoop-ring {
+  position: absolute; width: 180px; aspect-ratio: 1; border: 2px solid #ffe9a0;
+  border-radius: 50%; box-shadow: 0 0 30px #ffd46488, inset 0 0 30px #ffd46455;
+  animation: scoop-ring 1.2s ease-out both;
+}
+.scoop-message { position: relative; text-align: center; display: flex; align-items: center; flex-direction: column; animation: scoop-pop .65s cubic-bezier(.16,1.4,.3,1) both; }
+.scoop-message > small { color: #f5d68d; font-size: 11px; letter-spacing: 4px; }
+.scoop-message > strong {
+  display: block; font-size: clamp(70px, 13vw, 150px); line-height: 1.15;
+  font-weight: 950; font-style: italic; letter-spacing: -5px;
+  color: #ffe7a0; background: linear-gradient(175deg,#fffce5 10%,#ffd478 40%,#bb7922 56%,#ffebad 72%);
+  background-clip: text; -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 5px 0 #644112) drop-shadow(0 0 22px #f7c34370);
+}
+.scoop-message > b { color: #fff4cc; font-size: 16px; letter-spacing: 2px; }
+.scoop-message > span { color: #d6cba9; margin-top: 8px; font-size: 13px; }
+.scoop-message > em { color: #ffe6a0; font-size: 32px; font-weight: 800; font-style: normal; margin-top: 16px; font-variant-numeric: tabular-nums; }
+.scoop-message em small { font-size: 11px; letter-spacing: 2px; }
+.scoop-particles { position: absolute; left: 50%; top: 45%; }
+.scoop-particles i { position: absolute; display: block; animation: scoop-particle 2.3s var(--delay) ease-out both; }
+.scoop-spark { width: 6px; height: 12px; background: #ffe4a0; box-shadow: 0 0 10px #ffce5c; }
+.scoop-chip { width: 22px; height: 22px; border-radius: 50%; background: #b87a20; border: 3px dashed #fff0b6; box-shadow: 0 0 0 2px #d4a343, 0 0 18px #f5ce6066; }
+@keyframes scoop-stage { 0% { opacity: 0; } 10%,85% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes scoop-pop { from { opacity: 0; transform: scale(.45) translateY(25px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+@keyframes scoop-ring { from { opacity: .9; transform: scale(.4); } to { opacity: 0; transform: scale(3.5); } }
+@keyframes scoop-rays { to { transform: rotate(90deg); } }
+@keyframes scoop-particle { 0% { opacity: 0; transform: translate(0,0) scale(.3); } 12% { opacity: 1; } 75% { opacity: 1; } 100% { opacity: 0; transform: translate(var(--x),var(--y)) rotate(var(--spin)) scale(.8); } }
+@media (max-width: 780px) {
+  .scoop-celebration { inset: 62px 0 180px; }
+  .scoop-message > small { font-size: 8px; letter-spacing: 2px; }
+  .scoop-message > b { font-size: 11px; letter-spacing: 1px; }
+  .scoop-message > span { font-size: 11px; }
+  .scoop-message > em { font-size: 27px; margin-top: 10px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .scoop-celebration, .scoop-message, .scoop-rays { animation: none; }
+  .scoop-ring, .scoop-particles { display: none; }
+}

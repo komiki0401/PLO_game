@@ -16,6 +16,7 @@ import { TableAudio } from "./audio/tableAudio";
 import { ChipStacks, ChipLegend } from "./components/ChipStacks";
 import { HomeScreen } from "./components/HomeScreen";
 import { AllInCutIn, useAllInCutIn } from "./components/AllInCutIn";
+import { ScoopCelebration } from "./components/ScoopCelebration";
 import { actionAnnouncement } from "./audio/actionAnnouncement";
 import {
   newScore,
@@ -329,6 +330,13 @@ export default function App() {
   }>({ view: null, index: 0, complete: false });
   const [selectedStep, setSelectedStep] = useState<number | null>(null);
   const spokenBoards = useRef(new WeakMap<State, Set<number>>());
+  const celebrated = useRef(new WeakSet<State>());
+  const [celebration, setCelebration] = useState<State | null>(null);
+  useEffect(() => {
+    if (!celebration) return;
+    const timer = setTimeout(() => setCelebration(null), 2800);
+    return () => clearTimeout(timer);
+  }, [celebration]);
   useEffect(() => {
     setSelectedStep(null);
     if (screen !== "table" || !steps.length) return;
@@ -355,6 +363,10 @@ export default function App() {
         else {
           setPresentation({ view, index, complete: true });
           tableAudio.current?.cue(scoop ? "scoop" : "win");
+          if (scoop && !replay && !celebrated.current.has(view)) {
+            celebrated.current.add(view);
+            setCelebration(view);
+          }
         }
       });
     }
@@ -988,6 +1000,13 @@ export default function App() {
                 </>
               )}
             </section>
+            {celebration === view && !replay && scoop && (
+              <ScoopCelebration
+                winner={view.players[sole].name}
+                amount={view.payouts[sole] ?? 0}
+                hero={sole === 0}
+              />
+            )}
             {allIn.cutIn && (
               <AllInCutIn
                 key={allIn.cutIn.key}
