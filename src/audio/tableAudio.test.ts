@@ -158,7 +158,7 @@ describe("shipped speech assets", () => {
       readFileSync(new URL("manifest.json", root), "utf8"),
     );
     expect(manifest.voice).toBe("jf_alpha");
-    expect(manifest.clips).toHaveLength(21);
+    expect(manifest.clips).toHaveLength(22);
     const files = new Set(
       manifest.clips.map((clip: { file: string }) => clip.file),
     );
@@ -224,7 +224,7 @@ describe("action speech scheduling", () => {
   });
   it("ships all action clips", () => {
     const root = new URL("../../public/audio/voice/", import.meta.url);
-    for (const action of ["call", "raise", "bet"])
+    for (const action of ["call", "raise", "bet", "allin"])
       expect(statSync(new URL(`${action}.mp3`, root)).size).toBeGreaterThan(
         3000,
       );

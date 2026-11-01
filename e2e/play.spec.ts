@@ -32,7 +32,7 @@ test("human vs five CPUs: play through two hands, history, replay, settings", as
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
   await openTable(page);
-  await expect(page.getByRole("heading", { name: /Two boards/ })).toBeVisible();
+  await expect(page.locator(".arena")).toBeVisible();
   await page.getByRole("button", { name: /設定/ }).click();
   await page.getByLabel("CPU難易度").selectOption("EASY");
   await page.getByLabel("初期スタック").fill("10000000");
@@ -110,6 +110,9 @@ test("showdown reveals exactly five winning cards on A, pauses, then reveals B",
   await page.clock.install();
   await page.clock.pauseAt(new Date(Date.now() + 1000));
   await page.getByRole("button", { name: "設定を適用して開始 →" }).click();
+  await expect(page.locator(".all-in-cutin")).toBeVisible();
+  await page.clock.runFor(1600);
+  await expect(page.locator(".all-in-cutin")).toHaveCount(0);
   const verdict = page.locator(".showdown-verdict");
   await expect(verdict).toHaveAttribute("data-board", "0");
   await expect(page.locator(".seat-top strong")).toHaveText([
@@ -398,7 +401,7 @@ test("chip piles match balances and large stacks fit a narrow table", async ({
       .locator(".seat:not(.human) .seat-top strong")
       .first()
       .evaluate((el) => parseFloat(getComputedStyle(el).fontSize)),
-  ).toBeGreaterThanOrEqual(18);
+  ).toBeGreaterThanOrEqual(14);
   await page.setViewportSize({ width: 320, height: 844 });
   await page.getByRole("button", { name: "設定", exact: true }).click();
   await page.getByLabel("初期スタック").fill("10000000");

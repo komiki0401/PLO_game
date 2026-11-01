@@ -1,9 +1,17 @@
-export type SpokenAction = "call" | "raise" | "bet";
+export type SpokenAction = "call" | "raise" | "bet" | "allin";
 export const actionVoicePath = (action: SpokenAction) =>
   `${import.meta.env.BASE_URL}audio/voice/${action}.mp3`;
 export type AudioPrefs = { sound: boolean; voice: boolean; volume: number };
 export type SoundCue =
-  "deal" | "check" | "chips" | "fold" | "board" | "reveal" | "win" | "scoop";
+  | "deal"
+  | "check"
+  | "chips"
+  | "fold"
+  | "board"
+  | "reveal"
+  | "win"
+  | "scoop"
+  | "allin";
 const base = import.meta.env.BASE_URL;
 export const voicePath = (board: number, category: number) =>
   `${base}audio/voice/${board === 0 ? "a" : "b"}-${category}.mp3`;
@@ -127,6 +135,7 @@ export class TableAudio {
         resolve();
       };
       const failed = () => {
+        if (settled) return;
         this.onBlocked();
         cleanup();
       };
@@ -212,6 +221,12 @@ export class TableAudio {
       case "win":
         [523.25, 659.25, 783.99, 1046.5].forEach((f, i) =>
           note(f, i * 0.09, 0.34, 0.06),
+        );
+        break;
+      case "allin":
+        note(110, 0, 0.48, 0.09, "triangle", 55);
+        [330, 440, 660, 880].forEach((f, i) =>
+          note(f, i * 0.075, 0.32, 0.055, "triangle"),
         );
         break;
       case "scoop":

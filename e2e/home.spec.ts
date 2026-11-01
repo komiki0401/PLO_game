@@ -54,6 +54,7 @@ test("starts at home, waits for play, returns after a bust and preserves the sco
     "data-board",
     "0",
   );
+  await page.clock.runFor(1600); // Ante all-in cut-in precedes the board results.
   for (let i = 0; i < 3; i++) await page.clock.runFor(1600);
   await expect(page.getByRole("heading", { name: /GAME OVER/ })).toBeVisible();
   await expect(page.locator(".home-screen")).toHaveCount(0);
@@ -97,6 +98,7 @@ test("a positive all-in payout stays playable, records once and survives reload"
   await page
     .getByRole("button", { name: "ゲームを始める", exact: true })
     .click();
+  await page.clock.runFor(1600); // Ante all-in cut-in.
   await page.clock.runFor(1600);
   await page.clock.runFor(1600);
   await expect(

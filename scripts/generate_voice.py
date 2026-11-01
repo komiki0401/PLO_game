@@ -24,6 +24,7 @@ OUT = ROOT / 'public/audio/voice'
 NAMES = ['ハイカード','ワンペア','ツーペア','スリーカード','ストレート','フラッシュ','フルハウス','フォーカード','ストレートフラッシュ']
 parser=argparse.ArgumentParser()
 parser.add_argument('--actions-only',action='store_true')
+parser.add_argument('--allin-only',action='store_true')
 args=parser.parse_args()
 torch.set_num_threads(2)
 def get(filename):
@@ -33,9 +34,9 @@ pipeline = KPipeline(lang_code='j',repo_id=REPO,model=model,device='cpu')
 voice=get('voices/jf_alpha.pt')
 OUT.mkdir(parents=True,exist_ok=True)
 manifest_path=OUT/'manifest.json'
-manifest=json.loads(manifest_path.read_text()) if args.actions_only else {'model':REPO,'revision':REVISION,'voice':'jf_alpha','license':'Apache-2.0','clips':[]}
-tasks=[] if args.actions_only else [(f'{board}-{category}.mp3',f'ボード{spoken}。{name}。') for board,spoken in [('a','エー'),('b','ビー')] for category,name in enumerate(NAMES)]
-tasks += [('call.mp3','コール。'),('raise.mp3','レイズ。'),('bet.mp3','ベット。')]
+manifest=json.loads(manifest_path.read_text()) if (args.actions_only or args.allin_only) else {'model':REPO,'revision':REVISION,'voice':'jf_alpha','license':'Apache-2.0','clips':[]}
+tasks=[] if (args.actions_only or args.allin_only) else [(f'{board}-{category}.mp3',f'ボード{spoken}。{name}。') for board,spoken in [('a','エー'),('b','ビー')] for category,name in enumerate(NAMES)]
+tasks += [('allin.mp3','オールイン。')] if args.allin_only else [('call.mp3','コール。'),('raise.mp3','レイズ。'),('bet.mp3','ベット。'),('allin.mp3','オールイン。')]
 with tempfile.TemporaryDirectory(prefix='plo-voice-') as tmp:
     for filename,text in tasks:
         chunks=[r.audio.numpy() for r in pipeline(text,voice=voice,speed=1.05)]

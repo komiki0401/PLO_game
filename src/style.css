@@ -2423,3 +2423,1228 @@ header {
     font-size: 9px;
   }
 }
+/* The playable table and every betting control share one visible viewport. */
+.table-screen {
+  padding: 0 24px;
+}
+.game-viewport {
+  height: 100vh;
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  min-height: 0;
+  isolation: isolate;
+}
+.game-viewport > header {
+  height: 58px;
+  min-height: 58px;
+  flex: none;
+}
+.game-viewport .brand {
+  width: 156px !important;
+}
+.game-viewport .brand-logo {
+  max-height: 54px;
+}
+.game-viewport nav {
+  gap: 8px;
+}
+.game-viewport nav button {
+  padding: 7px 10px;
+}
+.table-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  min-height: 36px;
+  gap: 12px;
+  flex: none;
+  padding: 0 3px;
+}
+.table-toolbar .audio-bar {
+  margin: 0;
+  gap: 6px;
+}
+.table-toolbar .audio-bar > span {
+  display: none;
+}
+.table-toolbar .audio-bar button {
+  font-size: 10px;
+  padding: 5px 9px;
+  min-height: 26px;
+}
+.table-toolbar .audio-bar small {
+  font-size: 8px;
+}
+.table-toolbar .session-bar {
+  margin: 0;
+  flex: none;
+}
+.table-toolbar .session-bar > div:first-child {
+  display: none;
+}
+.table-toolbar .session-info {
+  gap: 18px;
+}
+.table-toolbar .session-info span {
+  font-size: 7px;
+  letter-spacing: 1px;
+}
+.table-toolbar .session-info b {
+  display: inline;
+  font-size: 11px;
+  margin-left: 7px;
+  letter-spacing: 0;
+}
+.game-viewport .arena {
+  height: auto;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+.game-viewport .table {
+  inset: 38px 17px 49px;
+  border-width: 9px;
+}
+.game-viewport .felt-label {
+  font-size: 8px;
+  letter-spacing: 4px;
+  top: 17px;
+}
+.game-viewport .table-meta {
+  font-size: 6px;
+  bottom: 17px;
+  letter-spacing: 2px;
+}
+.game-viewport .center-game {
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 370px;
+}
+.game-viewport .pot {
+  margin-bottom: 9px;
+}
+.game-viewport .pot small {
+  font-size: 7px;
+}
+.game-viewport .pot strong {
+  font-size: 28px;
+  line-height: 1.25;
+}
+.game-viewport .street {
+  font-size: 7px;
+  padding: 2px 6px;
+}
+.game-viewport .board-row {
+  gap: 9px;
+  margin-bottom: 7px;
+}
+.game-viewport .board-label {
+  width: 45px;
+}
+.game-viewport .board-label span {
+  font-size: 7px;
+}
+.game-viewport .board-label b {
+  font-size: 23px;
+}
+.game-viewport .board-label small {
+  font-size: 10px;
+}
+.game-viewport .board-cards {
+  gap: 5px;
+}
+.game-viewport .board-cards .card {
+  width: 48px;
+  height: 66px;
+  padding: 5px 6px;
+}
+.game-viewport .board-cards .card b {
+  font-size: 22px;
+}
+.game-viewport .board-cards .card span {
+  font-size: 23px;
+}
+.game-viewport .seat {
+  width: 158px;
+}
+.game-viewport .seat-top {
+  padding: 7px 9px;
+  gap: 7px;
+  min-height: 47px;
+}
+.game-viewport .seat-top b {
+  font-size: 9px;
+}
+.game-viewport .seat-top strong {
+  font-size: 20px;
+  margin-top: 2px;
+  line-height: 1.2;
+}
+.game-viewport .seat-top strong span {
+  font-size: 6px;
+}
+.game-viewport .avatar {
+  width: 26px;
+  height: 26px;
+  font-size: 15px;
+}
+.game-viewport .seat-0 {
+  width: 190px;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+}
+.game-viewport .seat-0 .seat-top {
+  width: 100%;
+}
+.game-viewport .seat-0 .seat-top strong {
+  font-size: 23px;
+}
+.game-viewport .long-stack .seat-top strong {
+  font-size: 17px;
+}
+.game-viewport .seat-0.long-stack .seat-top strong {
+  font-size: 19px;
+}
+.game-viewport .seat-0 .hole-cards {
+  width: 260px;
+  margin-left: 50%;
+  transform: translateX(-50%);
+  gap: 4px;
+}
+.game-viewport .seat-0 .card {
+  width: 44px;
+  height: 60px;
+  padding: 5px;
+}
+.game-viewport .seat-0 .card b {
+  font-size: 22px;
+}
+.game-viewport .seat-0 .card span {
+  font-size: 22px;
+}
+.game-viewport .seat-1 {
+  left: 0;
+  top: 54%;
+}
+.game-viewport .seat-5 {
+  right: 0;
+  top: 54%;
+}
+.game-viewport .seat-2 {
+  top: 24px;
+  left: 10%;
+}
+.game-viewport .seat-4 {
+  top: 24px;
+  right: 10%;
+}
+.game-viewport .seat-3 {
+  top: 0;
+}
+.game-viewport .hole-cards {
+  margin-top: 4px;
+  min-height: 35px;
+  gap: 2px;
+}
+.game-viewport .card.small {
+  width: 25px;
+  height: 35px;
+  padding: 2px;
+}
+.game-viewport .card.small b {
+  font-size: 13px;
+}
+.game-viewport .card.small span {
+  font-size: 12px;
+}
+.game-viewport .seat-status {
+  font-size: 8px;
+  margin-top: 4px;
+  min-height: 18px;
+  letter-spacing: 0.3px;
+}
+.game-viewport .chip-rack {
+  height: 34px;
+  gap: 5px;
+  padding-top: 0;
+}
+.game-viewport .chip-column {
+  width: 21px;
+}
+.game-viewport .chip-pile {
+  height: 23px;
+  transform: scaleY(0.72);
+  transform-origin: center bottom;
+}
+.game-viewport .chip-count {
+  font-size: 9px;
+  line-height: 11px;
+}
+.game-viewport .chip-disc {
+  height: 9px;
+  line-height: 7px;
+  font-size: 6px;
+}
+.game-viewport .long-stack .chip-count {
+  font-size: 7px;
+  letter-spacing: -0.6px;
+}
+.game-viewport .bet-chip {
+  font-size: 11px;
+  padding: 3px 6px;
+  margin-left: 4px;
+}
+.game-viewport .payout {
+  font-size: 12px;
+  padding: 3px 9px;
+}
+.game-viewport .your-turn-flag {
+  top: -20px;
+  font-size: 8px;
+  padding: 4px 9px;
+}
+.game-viewport .dealer {
+  width: 19px;
+  height: 19px;
+  right: -8px;
+  top: -6px;
+  font-size: 8px;
+}
+.game-viewport .action-panel {
+  flex: none;
+  height: 108px;
+  min-height: 0;
+  margin: 7px 0 0;
+  padding: 10px 14px;
+  gap: 14px;
+  border-radius: 10px;
+  background: #102824f7;
+}
+.game-viewport .turn-copy {
+  gap: 6px;
+  min-width: 160px;
+}
+.game-viewport .turn-copy strong {
+  font-size: 13px;
+}
+.game-viewport .turn-copy small {
+  font-size: 9px;
+}
+.game-viewport .controls {
+  gap: 10px;
+}
+.game-viewport .basic-actions {
+  gap: 7px;
+}
+.game-viewport .basic-actions button {
+  height: 46px;
+  min-width: 85px;
+}
+.game-viewport .raise-controls {
+  gap: 10px;
+}
+.game-viewport .sizing {
+  width: 215px;
+  gap: 5px;
+}
+.game-viewport .sizing input[type="number"] {
+  padding: 5px;
+  width: 100px;
+}
+.game-viewport .sizing input[type="range"] {
+  height: 15px;
+}
+.game-viewport .presets button {
+  padding: 5px;
+  font-size: 10px;
+}
+.game-viewport .raise {
+  min-width: 111px;
+  padding: 10px 17px;
+}
+.game-viewport .raise b {
+  font-size: 20px;
+}
+.game-viewport .end-actions h2 {
+  font-size: 25px;
+}
+.game-viewport .end-actions h2 small {
+  font-size: 10px;
+}
+.game-viewport .end-actions > .primary {
+  padding: 12px 20px;
+}
+.game-viewport .showdown-verdict {
+  flex: none;
+  min-height: 46px;
+  max-height: 58px;
+  margin: 3px 0 0;
+  padding: 7px 14px;
+  gap: 12px;
+}
+.game-viewport .verdict-board {
+  font-size: 20px;
+}
+.game-viewport .showdown-verdict strong {
+  font-size: 14px;
+}
+.game-viewport .showdown-verdict small {
+  font-size: 8px;
+  margin-bottom: 3px;
+}
+.game-viewport .verdict-note {
+  font-size: 9px;
+}
+.all-in-shortcut,
+.all-in-button {
+  border-color: #e0a273 !important;
+  background: linear-gradient(130deg, #9b3931, #5d211f) !important;
+  color: #fff0d0 !important;
+}
+.game-viewport .all-in-shortcut {
+  font-weight: 800;
+}
+.all-in-label {
+  display: inline-block;
+  color: #ffe0a0;
+  background: #692c25;
+  border: 1px solid #e3a471;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 800;
+  padding: 3px 10px;
+  letter-spacing: 1px;
+}
+.is-all-in .seat-top {
+  border-color: #da9463;
+  box-shadow: 0 0 15px #d35c3120;
+}
+.game-viewport button:disabled {
+  cursor: default;
+}
+.game-viewport .controls button:disabled {
+  opacity: 0.45;
+}
+.game-viewport .call small {
+  display: block;
+  color: #ffe0a0;
+  font-size: 8px;
+  margin-top: 2px;
+  letter-spacing: 1px;
+}
+.all-in-cutin {
+  position: absolute;
+  z-index: 12;
+  left: 0;
+  right: 0;
+  top: 43%;
+  transform: translateY(-50%);
+  height: 190px;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  overflow: hidden;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    #180d0bef 12%,
+    #35120ff7 50%,
+    #180d0bef 88%,
+    transparent
+  );
+  border-top: 1px solid #f3cf8f;
+  border-bottom: 1px solid #f3cf8f;
+  box-shadow: 0 0 45px #e28d3e35;
+  animation: all-in-enter 0.28s ease-out both;
+}
+.all-in-streak {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    -25deg,
+    transparent 0 38px,
+    #dda65012 38px 40px,
+    transparent 40px 76px
+  );
+}
+.all-in-content {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  text-align: center;
+}
+.all-in-content small {
+  font-size: 14px;
+  color: #ead8a7;
+  letter-spacing: 3px;
+  font-weight: 600;
+}
+.all-in-content strong {
+  font-family: Georgia, serif;
+  font-size: 76px;
+  line-height: 1;
+  color: #ffe3a0;
+  letter-spacing: 5px;
+  text-shadow:
+    0 2px 0 #916231,
+    0 0 20px #e7924440;
+}
+.all-in-content strong span {
+  color: #eeba75;
+}
+.all-in-content > b {
+  font-size: 16px;
+  letter-spacing: 5px;
+  color: #fff0cc;
+}
+.all-in-amount {
+  font-size: 11px;
+  color: #dec28c;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 1px;
+}
+@keyframes all-in-enter {
+  from {
+    opacity: 0;
+    translate: -25px 0;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+@media (max-width: 1100px) and (min-width: 781px) {
+  .table-screen {
+    padding: 0 16px;
+  }
+  .game-viewport .turn-copy {
+    min-width: 135px;
+  }
+  .game-viewport .turn-copy small {
+    display: none;
+  }
+  .game-viewport .sizing {
+    width: 185px;
+  }
+  .game-viewport .basic-actions button {
+    min-width: 75px;
+  }
+  .game-viewport .seat {
+    width: 145px;
+  }
+  .game-viewport .seat-0 {
+    width: 180px;
+  }
+  .game-viewport .seat-2 {
+    left: 7%;
+  }
+  .game-viewport .seat-4 {
+    right: 7%;
+  }
+}
+@media (max-width: 780px) {
+  .table-screen {
+    padding: 0 10px;
+  }
+  .game-viewport > header {
+    height: 48px;
+    min-height: 48px;
+  }
+  .game-viewport .brand {
+    width: 118px !important;
+  }
+  .game-viewport .brand-logo {
+    max-height: 44px;
+  }
+  .game-viewport nav {
+    gap: 5px;
+  }
+  .game-viewport nav button {
+    padding: 5px 8px;
+    font-size: 12px;
+  }
+  .table-toolbar {
+    min-height: 32px;
+    gap: 6px;
+  }
+  .table-toolbar .audio-bar button {
+    font-size: 9px;
+    min-height: 25px;
+    padding: 4px 6px;
+  }
+  .table-toolbar .session-info {
+    gap: 10px;
+  }
+  .table-toolbar .session-info span {
+    font-size: 6px;
+    letter-spacing: 0.4px;
+  }
+  .table-toolbar .session-info b {
+    font-size: 10px;
+    margin-left: 4px;
+  }
+  .game-viewport .arena {
+    margin: 0;
+  }
+  .game-viewport .table {
+    inset: 30px 2px 53px;
+    border-width: 7px;
+  }
+  .game-viewport .rail-line {
+    inset: 8px;
+  }
+  .game-viewport .felt-label {
+    font-size: 6px;
+    top: 13px;
+    letter-spacing: 2px;
+  }
+  .game-viewport .table-meta {
+    font-size: 5px;
+    bottom: 12px;
+    letter-spacing: 1px;
+  }
+  .game-viewport .center-game {
+    width: 280px;
+    top: 50%;
+  }
+  .game-viewport .pot {
+    margin-bottom: 7px;
+  }
+  .game-viewport .pot small {
+    font-size: 6px;
+  }
+  .game-viewport .pot strong {
+    font-size: 26px;
+    line-height: 1.2;
+  }
+  .game-viewport .street {
+    font-size: 6px;
+    padding: 2px 5px;
+  }
+  .game-viewport .board-row {
+    gap: 7px;
+    margin-bottom: 6px;
+  }
+  .game-viewport .board-label {
+    width: 29px;
+  }
+  .game-viewport .board-label span {
+    font-size: 5px;
+    letter-spacing: 0.5px;
+  }
+  .game-viewport .board-label b {
+    font-size: 19px;
+  }
+  .game-viewport .board-label small {
+    font-size: 8px;
+  }
+  .game-viewport .board-cards {
+    gap: 4px;
+  }
+  .game-viewport .board-cards .card {
+    width: 40px;
+    height: 55px;
+    padding: 4px;
+  }
+  .game-viewport .board-cards .card b {
+    font-size: 21px;
+  }
+  .game-viewport .board-cards .card span {
+    font-size: 21px;
+  }
+  .game-viewport .seat {
+    width: 102px;
+  }
+  .game-viewport .seat-top {
+    padding: 6px;
+    min-height: 42px;
+    gap: 5px;
+    border-radius: 7px;
+  }
+  .game-viewport .seat-top b {
+    font-size: 8px;
+    letter-spacing: 0.4px;
+  }
+  .game-viewport .seat-top strong {
+    font-size: 16px;
+    letter-spacing: -0.35px;
+  }
+  .game-viewport .avatar {
+    width: 20px;
+    height: 20px;
+    font-size: 12px;
+  }
+  .game-viewport .long-stack .avatar,
+  .game-viewport .seat-0.long-stack .avatar {
+    display: none;
+  }
+  .game-viewport .long-stack .seat-top strong {
+    font-size: 13px;
+  }
+  .game-viewport .seat-0 {
+    width: 148px;
+    bottom: 0;
+  }
+  .game-viewport .seat-0 .seat-top strong {
+    font-size: 21px;
+  }
+  .game-viewport .seat-0.long-stack .seat-top strong {
+    font-size: 17px;
+  }
+  .game-viewport .seat-0 .hole-cards {
+    width: 240px;
+    gap: 4px;
+  }
+  .game-viewport .seat-0 .card {
+    width: 42px;
+    height: 54px;
+  }
+  .game-viewport .seat-0 .card b {
+    font-size: 22px;
+  }
+  .game-viewport .seat-0 .card span {
+    font-size: 21px;
+  }
+  .game-viewport .seat-2 {
+    top: 90px;
+    left: 0;
+  }
+  .game-viewport .seat-4 {
+    top: 90px;
+    right: 0;
+  }
+  .game-viewport .seat-1 {
+    left: 0;
+    top: calc(100% - 195px);
+  }
+  .game-viewport .seat-5 {
+    right: 0;
+    top: calc(100% - 195px);
+  }
+  .game-viewport .hole-cards {
+    min-height: 25px;
+    margin-top: 3px;
+    gap: 1px;
+  }
+  .game-viewport .card.small {
+    width: 19px;
+    height: 25px;
+    border-width: 1px;
+  }
+  .game-viewport .card.back:after {
+    font-size: 11px;
+    inset: 2px;
+  }
+  .game-viewport .card.small b {
+    font-size: 10px;
+  }
+  .game-viewport .card.small span {
+    font-size: 10px;
+  }
+  .game-viewport .chip-rack {
+    height: 24px;
+    gap: 3px;
+    padding: 0;
+  }
+  .game-viewport .chip-pile {
+    height: 16px;
+    transform: scaleY(0.48);
+  }
+  .game-viewport .chip-column {
+    width: 17px;
+  }
+  .game-viewport .chip-count {
+    font-size: 7px;
+    line-height: 8px;
+  }
+  .game-viewport .chip-disc {
+    height: 8px;
+    line-height: 6px;
+    font-size: 5px;
+  }
+  .game-viewport .long-stack .chip-count {
+    font-size: 6px;
+    letter-spacing: -0.5px;
+  }
+  .game-viewport .no-chips {
+    font-size: 6px;
+    padding: 2px;
+  }
+  .game-viewport .seat-status {
+    font-size: 6px;
+    margin-top: 2px;
+    min-height: 15px;
+    letter-spacing: 0;
+  }
+  .game-viewport .thinking i {
+    display: none;
+  }
+  .game-viewport .bet-chip {
+    padding: 2px 5px;
+    font-size: 9px;
+    margin: 2px 0 0 2px;
+  }
+  .game-viewport .payout {
+    font-size: 10px;
+    padding: 2px 7px;
+  }
+  .game-viewport .your-turn-flag {
+    top: -18px;
+    font-size: 7px;
+    padding: 3px 7px;
+    letter-spacing: 0.4px;
+  }
+  .game-viewport .dealer {
+    width: 16px;
+    height: 16px;
+    font-size: 7px;
+    right: -5px;
+    top: -5px;
+  }
+  .game-viewport .action-panel {
+    height: 178px;
+    min-height: 178px;
+    margin: 4px 0 0;
+    padding: 9px 10px max(9px, env(safe-area-inset-bottom));
+    gap: 6px;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    justify-content: center;
+    align-items: stretch;
+  }
+  .game-viewport .turn-copy {
+    flex: none;
+    gap: 4px;
+    min-width: 0;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .game-viewport .turn-copy .eyebrow {
+    font-size: 7px;
+  }
+  .game-viewport .turn-copy strong {
+    font-size: 11px;
+    line-height: 16px;
+  }
+  .game-viewport .turn-copy small {
+    display: none;
+  }
+  .game-viewport .controls {
+    flex: none;
+    width: 100%;
+    gap: 6px;
+    justify-content: stretch;
+  }
+  .game-viewport .basic-actions {
+    width: 100%;
+    gap: 6px;
+  }
+  .game-viewport .basic-actions button {
+    height: 44px;
+    min-height: 44px;
+    font-size: 13px;
+    min-width: 0;
+  }
+  .game-viewport .raise-controls {
+    width: 100%;
+    gap: 8px;
+  }
+  .game-viewport .sizing {
+    width: auto;
+    gap: 4px;
+    flex: 1;
+  }
+  .game-viewport .sizing label {
+    font-size: 8px;
+    gap: 6px;
+  }
+  .game-viewport .sizing input[type="number"] {
+    width: 93px;
+    height: 26px;
+    padding: 4px 6px;
+    font-size: 12px;
+  }
+  .game-viewport .sizing input[type="range"] {
+    height: 18px;
+  }
+  .game-viewport .presets {
+    gap: 4px;
+  }
+  .game-viewport .presets button {
+    min-height: 28px;
+    padding: 4px 3px;
+    font-size: 9px;
+  }
+  .game-viewport .raise {
+    min-width: 86px;
+    min-height: 70px;
+    font-size: 11px;
+    padding: 9px 12px;
+  }
+  .game-viewport .raise b {
+    font-size: 20px;
+  }
+  .game-viewport .end-actions {
+    gap: 9px;
+    justify-content: center;
+    align-items: stretch;
+    height: 100%;
+  }
+  .game-viewport .end-actions h2 {
+    font-size: 23px;
+    margin: 4px 0;
+  }
+  .game-viewport .end-actions h2 small {
+    font-size: 10px;
+    line-height: 1.6;
+    margin: 5px 0;
+  }
+  .game-viewport .end-actions > .primary {
+    min-height: 44px;
+    padding: 10px;
+    font-size: 13px;
+  }
+  .game-viewport .showdown-verdict {
+    height: 45px;
+    min-height: 45px;
+    max-height: 45px;
+    padding: 5px 9px;
+    margin-top: 2px;
+    gap: 8px;
+    flex-wrap: nowrap;
+  }
+  .game-viewport .verdict-board {
+    font-size: 16px;
+  }
+  .game-viewport .showdown-verdict small {
+    font-size: 6px;
+    margin-bottom: 2px;
+  }
+  .game-viewport .showdown-verdict strong {
+    font-size: 11px;
+  }
+  .game-viewport .verdict-note {
+    display: none;
+  }
+  .game-viewport .showdown-wait {
+    font-size: 10px;
+  }
+  .game-viewport .replay-timeline {
+    gap: 5px;
+    max-width: none;
+    min-width: 0;
+  }
+  .game-viewport .replay-timeline > span {
+    font-size: 11px;
+  }
+  .game-viewport .replay-timeline input {
+    height: 18px;
+  }
+  .all-in-cutin {
+    height: 166px;
+    top: 41%;
+  }
+  .all-in-content strong {
+    font-size: 61px;
+  }
+  .all-in-content small {
+    font-size: 12px;
+  }
+  .all-in-content > b {
+    font-size: 14px;
+  }
+  .all-in-content .all-in-amount {
+    font-size: 10px;
+  }
+}
+@media (max-width: 370px) {
+  .game-viewport .seat {
+    width: 92px;
+  }
+  .game-viewport .seat-0 {
+    width: 110px;
+  }
+  .game-viewport .seat-0 .seat-top strong {
+    font-size: 18px;
+  }
+  .game-viewport .seat-0.long-stack .seat-top strong {
+    font-size: 15px;
+  }
+  .game-viewport .center-game {
+    width: 252px;
+  }
+  .game-viewport .board-cards .card {
+    width: 35px;
+    height: 50px;
+  }
+  .game-viewport .board-cards {
+    gap: 3px;
+  }
+  .game-viewport .seat-0 .hole-cards {
+    width: 228px;
+  }
+  .game-viewport .seat-0 .card {
+    width: 40px;
+    height: 52px;
+  }
+}
+@media (max-height: 760px) and (max-width: 780px) {
+  .game-viewport > header {
+    height: 42px;
+    min-height: 42px;
+  }
+  .game-viewport .brand {
+    width: 102px !important;
+  }
+  .game-viewport .brand-logo {
+    max-height: 39px;
+  }
+  .table-toolbar {
+    min-height: 28px;
+  }
+  .game-viewport .action-panel {
+    height: 165px;
+    min-height: 165px;
+    padding-top: 6px;
+    padding-bottom: max(6px, env(safe-area-inset-bottom));
+  }
+  .game-viewport .turn-copy .eyebrow {
+    display: none;
+  }
+  .game-viewport .turn-copy strong {
+    font-size: 10px;
+    line-height: 13px;
+  }
+  .game-viewport .basic-actions button {
+    height: 42px;
+    min-height: 42px;
+  }
+  .game-viewport .presets button {
+    min-height: 25px;
+  }
+  .game-viewport .sizing input[type="number"] {
+    height: 24px;
+  }
+  .game-viewport .sizing input[type="range"] {
+    height: 16px;
+  }
+  .game-viewport .raise {
+    min-height: 66px;
+  }
+  .game-viewport .table {
+    inset: 24px 2px 41px;
+  }
+  .game-viewport .seat-top {
+    padding: 5px;
+    min-height: 36px;
+  }
+  .game-viewport .seat-top strong {
+    font-size: 14px;
+  }
+  .game-viewport .avatar {
+    width: 16px;
+    height: 16px;
+    font-size: 10px;
+  }
+  .game-viewport .seat-0 .seat-top strong {
+    font-size: 18px;
+  }
+  .game-viewport .chip-rack {
+    height: 13px;
+  }
+  .game-viewport .chip-pile {
+    height: 10px;
+    transform: scaleY(0.28);
+  }
+  .game-viewport .chip-count {
+    font-size: 5px;
+    line-height: 6px;
+  }
+  .game-viewport .chip-column {
+    position: relative;
+  }
+  .game-viewport .chip-count {
+    position: absolute;
+    bottom: -2px;
+    right: 0;
+  }
+  .game-viewport .hole-cards {
+    margin-top: 2px;
+    min-height: 22px;
+  }
+  .game-viewport .card.small {
+    height: 22px;
+    width: 17px;
+  }
+  .game-viewport .seat-status {
+    font-size: 5px;
+    min-height: 12px;
+    margin-top: 1px;
+  }
+  .game-viewport .seat-2,
+  .game-viewport .seat-4 {
+    top: 65px;
+  }
+  .game-viewport .seat-1,
+  .game-viewport .seat-5 {
+    top: calc(100% - 150px);
+  }
+  .game-viewport .seat-0 .card {
+    height: 46px;
+    width: 35px;
+  }
+  .game-viewport .seat-0 .hole-cards {
+    width: 214px;
+  }
+  .game-viewport .center-game {
+    width: 250px;
+  }
+  .game-viewport .board-cards .card {
+    width: 35px;
+    height: 48px;
+    padding: 3px;
+  }
+  .game-viewport .board-cards .card b {
+    font-size: 18px;
+  }
+  .game-viewport .board-cards .card span {
+    font-size: 18px;
+  }
+  .game-viewport .pot strong {
+    font-size: 24px;
+  }
+  .game-viewport .pot {
+    margin-bottom: 5px;
+  }
+  .game-viewport .board-row {
+    margin-bottom: 4px;
+  }
+  .game-viewport .board-label b {
+    font-size: 17px;
+  }
+  .game-viewport .your-turn-flag {
+    font-size: 6px;
+    top: -15px;
+    padding: 3px 5px;
+  }
+}
+@media (max-height: 620px) and (max-width: 780px) {
+  .game-viewport .seat-2,
+  .game-viewport .seat-4 {
+    top: 0;
+  }
+  .game-viewport .seat-status {
+    display: none;
+  }
+  .game-viewport .seat-0 .seat-status {
+    display: block;
+    min-height: 10px;
+  }
+  .game-viewport .seat-1,
+  .game-viewport .seat-5 {
+    top: calc(100% - 116px);
+  }
+  .game-viewport .seat-1 .hole-cards,
+  .game-viewport .seat-5 .hole-cards {
+    position: absolute;
+    top: -24px;
+    width: 34px;
+    margin: 0;
+    justify-content: flex-start;
+    gap: 0;
+  }
+  .game-viewport .seat-1 .hole-cards {
+    left: 0;
+  }
+  .game-viewport .seat-5 .hole-cards {
+    right: 0;
+  }
+  .game-viewport .seat-1 .card.small + .card.small,
+  .game-viewport .seat-5 .card.small + .card.small {
+    margin-left: -13px;
+  }
+  .game-viewport .center-game {
+    width: 226px;
+    top: calc(50% - 18px);
+  }
+  .game-viewport .board-cards .card {
+    width: 29px;
+    height: 40px;
+    padding: 2px;
+  }
+  .game-viewport .board-cards .card b,
+  .game-viewport .board-cards .card span {
+    font-size: 16px;
+  }
+  .game-viewport .board-label {
+    width: 25px;
+  }
+  .game-viewport .board-label span {
+    display: none;
+  }
+  .game-viewport .board-label small {
+    font-size: 7px;
+  }
+  .game-viewport .pot strong {
+    font-size: 21px;
+  }
+  .game-viewport .street {
+    font-size: 5px;
+    padding: 1px 4px;
+  }
+  .game-viewport .board-cards {
+    gap: 3px;
+  }
+  .game-viewport .board-row {
+    gap: 5px;
+    margin-bottom: 3px;
+  }
+  .game-viewport .pot small {
+    font-size: 5px;
+  }
+  .game-viewport .pot {
+    margin-bottom: 4px;
+  }
+  .game-viewport .seat-0 .card {
+    height: 42px;
+    width: 32px;
+  }
+  .game-viewport .seat-0 .hole-cards {
+    width: 196px;
+  }
+  .game-viewport .seat-0 .card b,
+  .game-viewport .seat-0 .card span {
+    font-size: 19px;
+  }
+  .game-viewport .seat-0 .chip-rack {
+    height: 12px;
+  }
+}
+@media (max-width: 780px) {
+  .game-viewport .action-panel {
+    height: calc(178px + env(safe-area-inset-bottom));
+    min-height: calc(178px + env(safe-area-inset-bottom));
+  }
+}
+@media (max-height: 760px) and (max-width: 780px) {
+  .game-viewport .action-panel {
+    height: calc(165px + env(safe-area-inset-bottom));
+    min-height: calc(165px + env(safe-area-inset-bottom));
+  }
+}
+
+@media (min-width: 781px) and (max-height: 800px) {
+  .game-viewport .center-game { top: calc(50% - 22px); }
+}
+@media (max-width: 780px) and (min-height: 621px) and (max-height: 760px) {
+  .game-viewport .center-game { top: calc(50% - 12px); }
+}

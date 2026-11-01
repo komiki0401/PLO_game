@@ -15,6 +15,8 @@ import type { Action } from "./game/betting";
 import { TableAudio } from "./audio/tableAudio";
 import { ChipStacks, ChipLegend } from "./components/ChipStacks";
 import { HomeScreen } from "./components/HomeScreen";
+import { AllInCutIn, useAllInCutIn } from "./components/AllInCutIn";
+import { actionAnnouncement } from "./audio/actionAnnouncement";
 import {
   newScore,
   recordCompletedHand,
@@ -113,6 +115,23 @@ export default function App() {
   const voicePlayer = useRef<HTMLAudioElement | null>(null),
     tableAudio = useRef<TableAudio | null>(null),
     previousAudioGame = useRef<State | null>(null);
+  const allIn = useAllInCutIn(tableAudio);
+  function showAnteAllIns(
+    players: { name: string; stack: number }[],
+    ante: number,
+    ready: Promise<unknown> = Promise.resolve(),
+  ) {
+    const active = players.filter((p) => p.stack > 0),
+      forced = active.filter((p) => p.stack <= ante);
+    if (forced.length)
+      allIn.show(
+        forced.length === active.length
+          ? "全員"
+          : forced.map((p) => p.name).join(" / "),
+        forced.reduce((sum, p) => sum + p.stack, 0),
+        ready,
+      );
+  }
   const [audioReady, setAudioReady] = useState(false),
     [audioError, setAudioError] = useState("");
   useEffect(() => {
@@ -175,16 +194,19 @@ export default function App() {
   }
   function commitAction(state: State, a: Action) {
     const next = act(state, a);
-    if (a.type === "call") void tableAudio.current?.announceAction("call");
-    else if (a.type === "raise")
-      void tableAudio.current?.announceAction(
-        state.high === 0 ? "bet" : "raise",
+    const announcement = actionAnnouncement(state, a);
+    if (announcement === "allin")
+      allIn.show(
+        state.players[state.actor].name,
+        state.players[state.actor].stack,
       );
+    else if (announcement)
+      void tableAudio.current?.announceAction(announcement);
     setGame(next);
   }
   function dispatch(a: Action) {
     try {
-      if (game.done || game.actor !== 0) return;
+      if (game.done || game.actor !== 0 || allIn.cutIn) return;
       commitAction(game, a);
       setError("");
     } catch (e) {
@@ -195,7 +217,10 @@ export default function App() {
     if (screen !== "table" || game.done || game.actor === 0) return;
     let cancelled = false;
     const timer = setTimeout(() => {
-      void (tableAudio.current?.whenIdle() ?? Promise.resolve()).then(() => {
+      void Promise.all([
+        tableAudio.current?.whenIdle() ?? Promise.resolve(),
+        allIn.gate.current,
+      ]).then(() => {
         if (cancelled) return;
         try {
           commitAction(game, cpu(game));
@@ -333,11 +358,13 @@ export default function App() {
         }
       });
     }
-    show(0);
+    void allIn.gate.current.then(() => {
+      if (!cancelled) show(0);
+    });
     return () => {
       cancelled = true;
       clearTimeout(timer);
-      tableAudio.current?.stopVoice();
+      if (!allIn.active.current) tableAudio.current?.stopVoice();
     };
   }, [view, steps, settings.speed, screen]);
   const presentationIndex = presentation.view === view ? presentation.index : 0;
@@ -378,6 +405,7 @@ export default function App() {
   }
   function returnHome() {
     finishSession();
+    allIn.clear();
     tableAudio.current?.stopVoice();
     setScreen("home");
     setConfig(false);
@@ -393,6 +421,7 @@ export default function App() {
       activeScore.current = newScore(selected);
       previousAudioGame.current = null;
       recorded.current = null;
+      allIn.clear();
       tableAudio.current?.stopVoice();
       tableAudio.current?.configure(selected);
       setSettings(selected);
@@ -411,23 +440,34 @@ export default function App() {
       setError("");
       setScreen("table");
       window.scrollTo(0, 0);
-      if (selected.sound || selected.voice)
-        void tableAudio.current?.unlock().then((ok) => {
-          if (ok) {
-            setAudioReady(true);
-            setAudioError("");
-            tableAudio.current?.cue("deal");
-          }
-        });
+      const ready =
+        selected.sound || selected.voice
+          ? (tableAudio.current?.unlock() ?? Promise.resolve(false))
+          : Promise.resolve(false);
+      void ready.then((ok) => {
+        if (ok) {
+          setAudioReady(true);
+          setAudioError("");
+          tableAudio.current?.cue("deal");
+        }
+      });
+      showAnteAllIns(
+        fresh.players.map((p) => ({ name: p.name, stack: selected.stack })),
+        selected.ante,
+        ready,
+      );
     } catch {
       setError("人数・スタック・アンティを確認してください。");
     }
   }
   function next() {
     try {
+      const fresh = nextHand(game);
       before.current = game.players[0].stack;
+      allIn.clear();
       tableAudio.current?.stopVoice();
-      setGame(nextHand(game));
+      showAnteAllIns(game.players, game.settings.ante);
+      setGame(fresh);
     } catch (e) {
       setError((e as Error).message);
     }
@@ -458,6 +498,7 @@ export default function App() {
         <main
           className={
             [
+              "table-screen",
               view.done && activeStep ? "showdown" : "",
               humanTurn ? "human-turn" : "",
             ]
@@ -470,446 +511,492 @@ export default function App() {
             { "--motion": `${0.5 / settings.speed}s` } as React.CSSProperties
           }
         >
-          <header>
-            <a
-              className="brand"
-              href="#"
-              onClick={(e) => {
-                e.preventDefault();
-                returnHome();
-              }}
-              aria-label="DOUBLE BOARD PLO5 ホーム"
-            >
-              <img
-                className="brand-logo"
-                src={`${import.meta.env.BASE_URL}branding/double-board-plo5-logo.webp`}
-                alt="DOUBLE BOARD PLO5"
-                width="1983"
-                height="793"
-                fetchPriority="high"
-              />
-            </a>
-            <nav>
-              <button aria-label="トップへ" onClick={returnHome}>
-                ⌂ <span>トップ</span>
-              </button>
-              <span className="play-money">
-                <i />
-                PLAY CHIPS ONLY
-              </span>
-              <button onClick={() => setRules(true)} aria-label="ルール">
-                ? <span>ルール</span>
-              </button>
-              <button
-                aria-label="設定"
-                onClick={() => {
-                  setDraft(settings);
-                  setConfig(true);
+          <div className="game-viewport">
+            <header>
+              <a
+                className="brand"
+                href="#"
+                onClick={(e) => {
+                  e.preventDefault();
+                  returnHome();
                 }}
+                aria-label="DOUBLE BOARD PLO5 ホーム"
               >
-                ⚙ <span>設定</span>
-              </button>
-            </nav>
-          </header>
-          <div className="audio-bar">
-            <span>TABLE AUDIO · SE ＆ 日本語女性ボイス</span>
-            {!audioReady || (!settings.sound && !settings.voice) ? (
-              <button onClick={enableAudio}>🔊 音声を有効にする</button>
-            ) : (
-              <button onClick={muteAudio}>🔇 ミュート</button>
-            )}
-            {audioError && <small role="status">{audioError}</small>}
-          </div>
-          <div className="session-bar">
-            <div>
-              <span className="eyebrow">YOUR PRIVATE TABLE</span>
-              <h1>
-                Two boards. <em>Twice the possibility.</em>
-              </h1>
-            </div>
-            <div className="session-info">
-              <span>
-                HAND <b>#{view.hand.toString().padStart(3, "0")}</b>
-              </span>
-              <span>
-                ANTE <b>{fmt(view.settings.ante)}</b>
-              </span>
-              <span>
-                CPU <b>{view.settings.difficulty}</b>
-              </span>
-            </div>
-          </div>
-          <section className="arena" aria-label="ポーカーテーブル">
-            <div className="table">
-              <div className="rail-line" />
-              <div className="felt-label">
-                DOUBLE BOARD <span>♠</span> PLO5
-              </div>
-              <div className="table-meta">
-                BOMB POT · POT LIMIT · {view.players.length} PLAYERS
-              </div>
-              <div className="center-game">
-                <div className="pot">
-                  <small>{view.done ? "TOTAL POT" : "IN THE MIDDLE"}</small>
-                  <strong>
-                    <span className="chip-icon">◉</span> {fmt(pot)}
-                  </strong>
-                  <span className="street">
-                    {view.done
-                      ? "HAND COMPLETE"
-                      : ["FLOP", "TURN", "RIVER"][view.street]}
-                  </span>
-                </div>
-                {view.boards.map((board, b) => (
-                  <div
-                    className={`board-row ${activeBoard === b ? "focused" : ""}`}
-                    key={b}
-                  >
-                    <button
-                      className="board-label"
-                      disabled={view.done && !showdownComplete}
-                      onClick={() => {
-                        setBoardFocus(b);
-                        const i = steps.findIndex(
-                          (step) => step.award.board === b,
-                        );
-                        if (i >= 0) {
-                          setSelectedStep(i);
-                        }
-                      }}
-                      aria-pressed={activeBoard === b}
-                    >
-                      <span>BOARD</span>
-                      <b>{"AB"[b]}</b>
-                      <small>
-                        {fmt(
-                          b === 0 ? Math.ceil(pot / 2) : Math.floor(pot / 2),
-                        )}
-                      </small>
-                    </button>
-                    <div className="board-cards">
-                      {Array.from({ length: 5 }, (_, i) => (
-                        <PlayingCard
-                          key={`${view.hand}-${b}-${i}-${board[i] ?? "empty"}`}
-                          card={board[i]}
-                          lit={
-                            view.done &&
-                            activeBoard === b &&
-                            highlighted.has(board[i])
-                          }
-                        />
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-            {view.players.map((p, i) => {
-              const shown = i === 0 || (view.done && !p.folded),
-                winning = showdownComplete && (view.payouts[p.id] ?? 0) > 0,
-                visibleStack =
-                  p.stack -
-                  (view.done && !showdownComplete
-                    ? (view.payouts[p.id] ?? 0)
-                    : 0);
-              return (
-                <div
-                  key={p.id}
-                  className={`seat seat-${positions[view.players.length][i]} ${view.actor === i ? "active" : ""} ${p.folded ? "folded" : ""} ${i === 0 ? "human" : ""} ${winning ? "winner" : ""} ${fmt(visibleStack).length > 7 ? "long-stack" : ""}`}
-                >
-                  {i === 0 && humanTurn && (
-                    <span className="your-turn-flag" role="status">
-                      YOUR TURN · あなたの番
-                    </span>
-                  )}
-                  <div className="seat-top">
-                    <span className="avatar">{i === 0 ? "♠" : p.name[0]}</span>
-                    <div>
-                      <b>
-                        {p.name}
-                        {i === 0 && <small> YOU</small>}
-                      </b>
-                      <strong>
-                        {fmt(visibleStack)} <span>CHIPS</span>
-                      </strong>
-                    </div>
-                    {view.dealer === i && (
-                      <span className="dealer" title="ディーラー">
-                        D
-                      </span>
-                    )}
-                  </div>
-                  <ChipStacks amount={visibleStack} owner={p.name} />
-                  <div className="hole-cards">
-                    {p.hole.length ? (
-                      p.hole.map((c, n) => (
-                        <PlayingCard
-                          key={`${view.hand}-${n}`}
-                          card={c}
-                          back={!shown}
-                          small={i !== 0}
-                          lit={
-                            shown &&
-                            view.done &&
-                            !p.folded &&
-                            highlighted.has(c)
-                          }
-                        />
-                      ))
-                    ) : (
-                      <span className="out">SITTING OUT</span>
-                    )}
-                  </div>
-                  <div className="seat-status">
-                    {winning ? (
-                      <span className="payout">+{fmt(view.payouts[p.id])}</span>
-                    ) : view.actor === i ? (
-                      <span className="thinking">
-                        {i === 0 ? "あなたのアクション" : "THINKING"} <i>•••</i>
-                      </span>
-                    ) : (
-                      p.last || "READY"
-                    )}
-                    {!view.done && p.bet > 0 && (
-                      <span className="bet-chip">◉ {fmt(p.bet)}</span>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </section>
-          <ChipLegend />
-          {view.done && activeStep && (
-            <section
-              className="showdown-verdict"
-              aria-live="polite"
-              data-board={activeBoard}
-            >
-              <span className="verdict-board">BOARD {"AB"[activeBoard]}</span>
-              <div>
-                <small>
-                  {activeStep.award.pot === 0
-                    ? "MAIN POT"
-                    : `SIDE POT ${activeStep.award.pot}`}{" "}
-                  ·{" "}
-                  {activeStep.award.winners.length > 1 ? "同点勝利" : "WINNER"}
-                </small>
-                <strong>
-                  {view.players[activeStep.winner].name}{" "}
-                  <span>— {names[activeStep.hand.category]}</span>
-                </strong>
-              </div>
-              <span className="verdict-note">ホール2枚 ＋ ボード3枚</span>
-            </section>
-          )}
-          <section className="action-panel" aria-live="polite">
-            {replay ? (
-              <div className="end-actions">
-                <div className="replay-timeline">
-                  <span>REPLAY · HAND #{replay.hand}</span>
-                  <label>
-                    アクション {replayStep + 1} / {replaySequence.length}
-                    <input
-                      aria-label="リプレイのアクション"
-                      type="range"
-                      min="0"
-                      max={replaySequence.length - 1}
-                      value={replayStep}
-                      onChange={(e) => {
-                        const n = Number(e.target.value);
-                        setReplayStep(n);
-                        setReplay(replaySequence[n]);
-                      }}
-                    />
-                  </label>
-                  <small>{replay.log.at(-1)}</small>
-                </div>
-                <button className="primary" onClick={() => setReplay(null)}>
-                  ライブテーブルに戻る →
+                <img
+                  className="brand-logo"
+                  src={`${import.meta.env.BASE_URL}branding/double-board-plo5-logo.webp`}
+                  alt="DOUBLE BOARD PLO5"
+                  width="1983"
+                  height="793"
+                  fetchPriority="high"
+                />
+              </a>
+              <nav>
+                <button aria-label="トップへ" onClick={returnHome}>
+                  ⌂ <span>トップ</span>
                 </button>
-              </div>
-            ) : game.done && !showdownComplete ? (
-              <div className="end-actions">
-                <div>
-                  <span className="eyebrow">
-                    SHOWDOWN · BOARD {"AB"[activeBoard]}
-                  </span>
-                  <h2>
-                    {names[activeStep.hand.category]}
-                    <small>
-                      {view.players[activeStep.winner].name} の最強ハンド
-                    </small>
-                  </h2>
-                </div>
-                <span className="showdown-wait">
-                  {steps[presentationIndex + 1]?.award.board !== activeBoard &&
-                  presentationIndex + 1 < steps.length
-                    ? "続いて BOARD B を判定します…"
-                    : "勝利ハンドを表示しています…"}
+                <span className="play-money">
+                  <i />
+                  PLAY CHIPS ONLY
                 </span>
+                <button onClick={() => setRules(true)} aria-label="ルール">
+                  ? <span>ルール</span>
+                </button>
+                <button
+                  aria-label="設定"
+                  onClick={() => {
+                    setDraft(settings);
+                    setConfig(true);
+                  }}
+                >
+                  ⚙ <span>設定</span>
+                </button>
+              </nav>
+            </header>
+            <div className="table-toolbar">
+              <div className="audio-bar">
+                <span>TABLE AUDIO · SE ＆ 日本語女性ボイス</span>
+                {!audioReady || (!settings.sound && !settings.voice) ? (
+                  <button onClick={enableAudio}>🔊 音声を有効にする</button>
+                ) : (
+                  <button onClick={muteAudio}>🔇 ミュート</button>
+                )}
+                {audioError && <small role="status">{audioError}</small>}
               </div>
-            ) : game.done ? (
-              <div className="end-actions">
+              <div className="session-bar">
                 <div>
-                  <span className="eyebrow">
-                    {scoop
-                      ? "ONE PLAYER. BOTH BOARDS."
-                      : "THE CHIPS HAVE FOUND THEIR HOME."}
+                  <span className="eyebrow">YOUR PRIVATE TABLE</span>
+                  <h1>
+                    Two boards. <em>Twice the possibility.</em>
+                  </h1>
+                </div>
+                <div className="session-info">
+                  <span>
+                    HAND <b>#{view.hand.toString().padStart(3, "0")}</b>
                   </span>
-                  <h2>
-                    {gameOver
-                      ? game.players[0].stack === 0
-                        ? "GAME OVER"
-                        : "TABLE WIN"
-                      : game.awards.length
-                        ? scoop
-                          ? "SCOOP!"
-                          : "CHOP!"
-                        : "HAND COMPLETE"}{" "}
-                    <small>
+                  <span>
+                    ANTE <b>{fmt(view.settings.ante)}</b>
+                  </span>
+                  <span>
+                    CPU <b>{view.settings.difficulty}</b>
+                  </span>
+                </div>
+              </div>
+            </div>
+            <section className="arena" aria-label="ポーカーテーブル">
+              <div className="table">
+                <div className="rail-line" />
+                <div className="felt-label">
+                  DOUBLE BOARD <span>♠</span> PLO5
+                </div>
+                <div className="table-meta">
+                  BOMB POT · POT LIMIT · {view.players.length} PLAYERS
+                </div>
+                <div className="center-game">
+                  <div className="pot">
+                    <small>{view.done ? "TOTAL POT" : "IN THE MIDDLE"}</small>
+                    <strong>
+                      <span className="chip-icon">◉</span> {fmt(pot)}
+                    </strong>
+                    <span className="street">
+                      {view.done
+                        ? "HAND COMPLETE"
+                        : ["FLOP", "TURN", "RIVER"][view.street]}
+                    </span>
+                  </div>
+                  {view.boards.map((board, b) => (
+                    <div
+                      className={`board-row ${activeBoard === b ? "focused" : ""}`}
+                      key={b}
+                    >
+                      <button
+                        className="board-label"
+                        disabled={view.done && !showdownComplete}
+                        onClick={() => {
+                          setBoardFocus(b);
+                          const i = steps.findIndex(
+                            (step) => step.award.board === b,
+                          );
+                          if (i >= 0) {
+                            setSelectedStep(i);
+                          }
+                        }}
+                        aria-pressed={activeBoard === b}
+                      >
+                        <span>BOARD</span>
+                        <b>{"AB"[b]}</b>
+                        <small>
+                          {fmt(
+                            b === 0 ? Math.ceil(pot / 2) : Math.floor(pot / 2),
+                          )}
+                        </small>
+                      </button>
+                      <div className="board-cards">
+                        {Array.from({ length: 5 }, (_, i) => (
+                          <PlayingCard
+                            key={`${view.hand}-${b}-${i}-${board[i] ?? "empty"}`}
+                            card={board[i]}
+                            lit={
+                              view.done &&
+                              activeBoard === b &&
+                              highlighted.has(board[i])
+                            }
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              {view.players.map((p, i) => {
+                const shown = i === 0 || (view.done && !p.folded),
+                  winning = showdownComplete && (view.payouts[p.id] ?? 0) > 0,
+                  visibleStack =
+                    p.stack -
+                    (view.done && !showdownComplete
+                      ? (view.payouts[p.id] ?? 0)
+                      : 0);
+                return (
+                  <div
+                    key={p.id}
+                    className={`seat seat-${positions[view.players.length][i]} ${view.actor === i ? "active" : ""} ${p.folded ? "folded" : ""} ${i === 0 ? "human" : ""} ${winning ? "winner" : ""} ${!view.done && !p.folded && p.stack === 0 && p.hole.length ? "is-all-in" : ""} ${fmt(visibleStack).length > 7 ? "long-stack" : ""}`}
+                  >
+                    {i === 0 && humanTurn && (
+                      <span className="your-turn-flag" role="status">
+                        YOUR TURN · あなたの番
+                      </span>
+                    )}
+                    <div className="seat-top">
+                      <span className="avatar">
+                        {i === 0 ? "♠" : p.name[0]}
+                      </span>
+                      <div>
+                        <b>
+                          {p.name}
+                          {i === 0 && <small> YOU</small>}
+                        </b>
+                        <strong>
+                          {fmt(visibleStack)} <span>CHIPS</span>
+                        </strong>
+                      </div>
+                      {view.dealer === i && (
+                        <span className="dealer" title="ディーラー">
+                          D
+                        </span>
+                      )}
+                    </div>
+                    <ChipStacks amount={visibleStack} owner={p.name} />
+                    <div className="hole-cards">
+                      {p.hole.length ? (
+                        p.hole.map((c, n) => (
+                          <PlayingCard
+                            key={`${view.hand}-${n}`}
+                            card={c}
+                            back={!shown}
+                            small={i !== 0}
+                            lit={
+                              shown &&
+                              view.done &&
+                              !p.folded &&
+                              highlighted.has(c)
+                            }
+                          />
+                        ))
+                      ) : (
+                        <span className="out">SITTING OUT</span>
+                      )}
+                    </div>
+                    <div className="seat-status">
+                      {!view.done &&
+                      !p.folded &&
+                      p.stack === 0 &&
+                      p.hole.length ? (
+                        <span className="all-in-label">ALL-IN</span>
+                      ) : winning ? (
+                        <span className="payout">
+                          +{fmt(view.payouts[p.id])}
+                        </span>
+                      ) : view.actor === i ? (
+                        <span className="thinking">
+                          {i === 0 ? "あなたのアクション" : "THINKING"}{" "}
+                          <i>•••</i>
+                        </span>
+                      ) : (
+                        p.last || "READY"
+                      )}
+                      {!view.done && p.bet > 0 && (
+                        <span className="bet-chip">◉ {fmt(p.bet)}</span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </section>
+
+            {view.done && activeStep && (
+              <section
+                className="showdown-verdict"
+                aria-live="polite"
+                data-board={activeBoard}
+              >
+                <span className="verdict-board">BOARD {"AB"[activeBoard]}</span>
+                <div>
+                  <small>
+                    {activeStep.award.pot === 0
+                      ? "MAIN POT"
+                      : `SIDE POT ${activeStep.award.pot}`}{" "}
+                    ·{" "}
+                    {activeStep.award.winners.length > 1
+                      ? "同点勝利"
+                      : "WINNER"}
+                  </small>
+                  <strong>
+                    {view.players[activeStep.winner].name}{" "}
+                    <span>— {names[activeStep.hand.category]}</span>
+                  </strong>
+                </div>
+                <span className="verdict-note">ホール2枚 ＋ ボード3枚</span>
+              </section>
+            )}
+            <section className="action-panel" aria-live="polite">
+              {replay ? (
+                <div className="end-actions">
+                  <div className="replay-timeline">
+                    <span>REPLAY · HAND #{replay.hand}</span>
+                    <label>
+                      アクション {replayStep + 1} / {replaySequence.length}
+                      <input
+                        aria-label="リプレイのアクション"
+                        type="range"
+                        min="0"
+                        max={replaySequence.length - 1}
+                        value={replayStep}
+                        onChange={(e) => {
+                          const n = Number(e.target.value);
+                          setReplayStep(n);
+                          setReplay(replaySequence[n]);
+                        }}
+                      />
+                    </label>
+                    <small>{replay.log.at(-1)}</small>
+                  </div>
+                  <button
+                    className="primary"
+                    onClick={() => {
+                      setReplay(null);
+                      window.scrollTo(0, 0);
+                    }}
+                  >
+                    ライブテーブルに戻る →
+                  </button>
+                </div>
+              ) : game.done && !showdownComplete ? (
+                <div className="end-actions">
+                  <div>
+                    <span className="eyebrow">
+                      SHOWDOWN · BOARD {"AB"[activeBoard]}
+                    </span>
+                    <h2>
+                      {names[activeStep.hand.category]}
+                      <small>
+                        {view.players[activeStep.winner].name} の最強ハンド
+                      </small>
+                    </h2>
+                  </div>
+                  <span className="showdown-wait">
+                    {steps[presentationIndex + 1]?.award.board !==
+                      activeBoard && presentationIndex + 1 < steps.length
+                      ? "続いて BOARD B を判定します…"
+                      : "勝利ハンドを表示しています…"}
+                  </span>
+                </div>
+              ) : game.done ? (
+                <div className="end-actions">
+                  <div>
+                    <span className="eyebrow">
+                      {scoop
+                        ? "ONE PLAYER. BOTH BOARDS."
+                        : "THE CHIPS HAVE FOUND THEIR HOME."}
+                    </span>
+                    <h2>
                       {gameOver
                         ? game.players[0].stack === 0
-                          ? "スタックが0になりました。3秒後にトップへ戻ります。"
-                          : "全チップを獲得！3秒後にトップへ戻ります。"
-                        : scoop
-                          ? `${game.players[sole].name} が両ボードを獲得`
-                          : sessionOver
-                            ? "セッション終了"
-                            : "次の一手は、新しいボードで。"}
+                          ? "GAME OVER"
+                          : "TABLE WIN"
+                        : game.awards.length
+                          ? scoop
+                            ? "SCOOP!"
+                            : "CHOP!"
+                          : "HAND COMPLETE"}{" "}
+                      <small>
+                        {gameOver
+                          ? game.players[0].stack === 0
+                            ? "スタックが0になりました。3秒後にトップへ戻ります。"
+                            : "全チップを獲得！3秒後にトップへ戻ります。"
+                          : scoop
+                            ? `${game.players[sole].name} が両ボードを獲得`
+                            : sessionOver
+                              ? "セッション終了"
+                              : "次の一手は、新しいボードで。"}
+                      </small>
+                    </h2>
+                  </div>
+                  {gameOver ? (
+                    <button className="primary" onClick={returnHome}>
+                      トップへ戻る
+                    </button>
+                  ) : (
+                    <button
+                      className="primary"
+                      disabled={!!allIn.cutIn}
+                      onClick={next}
+                    >
+                      次のハンド <span>→</span>
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <>
+                  <div className="turn-copy">
+                    <span className="eyebrow">
+                      {humanTurn
+                        ? "YOUR MOVE"
+                        : game.players[0].folded
+                          ? "YOU FOLDED"
+                          : "AT THE TABLE"}
+                    </span>
+                    <strong>
+                      {humanTurn
+                        ? l.canCheck
+                          ? "チェック、またはベット"
+                          : `${fmt(l.call)} でコール`
+                        : game.players[game.actor]?.name +
+                          " のアクションを待っています"}
+                    </strong>
+                    <small>
+                      {humanTurn
+                        ? "ホールカード2枚 ＋ ボード3枚で役を作ります"
+                        : "2つのボード、それぞれの勝負。"}
                     </small>
-                  </h2>
-                </div>
-                {gameOver ? (
-                  <button className="primary" onClick={returnHome}>
-                    トップへ戻る
-                  </button>
-                ) : (
-                  <button className="primary" onClick={next}>
-                    次のハンド <span>→</span>
-                  </button>
-                )}
-              </div>
-            ) : (
-              <>
-                <div className="turn-copy">
-                  <span className="eyebrow">
-                    {humanTurn
-                      ? "YOUR MOVE"
-                      : game.players[0].folded
-                        ? "YOU FOLDED"
-                        : "AT THE TABLE"}
-                  </span>
-                  <strong>
-                    {humanTurn
-                      ? l.canCheck
-                        ? "チェック、またはベット"
-                        : `${fmt(l.call)} でコール`
-                      : game.players[game.actor]?.name +
-                        " のアクションを待っています"}
-                  </strong>
-                  <small>
-                    {humanTurn
-                      ? "ホールカード2枚 ＋ ボード3枚で役を作ります"
-                      : "2つのボード、それぞれの勝負。"}
-                  </small>
-                </div>
-                {humanTurn && (
-                  <div className="controls">
-                    <div className="basic-actions">
-                      {l.canFold && (
+                  </div>
+                  {humanTurn && (
+                    <div className="controls">
+                      <div className="basic-actions">
+                        {l.canFold && (
+                          <button
+                            className="fold"
+                            disabled={!!allIn.cutIn}
+                            onClick={() => dispatch({ type: "fold" })}
+                          >
+                            Fold
+                          </button>
+                        )}
                         <button
-                          className="fold"
-                          onClick={() => dispatch({ type: "fold" })}
-                        >
-                          Fold
-                        </button>
-                      )}
-                      <button
-                        className="call"
-                        onClick={() =>
-                          dispatch({ type: l.canCheck ? "check" : "call" })
-                        }
-                      >
-                        {l.canCheck ? "Check" : `Call ${fmt(l.call)}`}
-                      </button>
-                    </div>
-                    {l.canRaise && (
-                      <div className="raise-controls">
-                        <div className="sizing">
-                          <label>
-                            合計ベット額
-                            <input
-                              aria-label="合計ベット額"
-                              type="number"
-                              min={l.min}
-                              max={l.max}
-                              step="1"
-                              value={raiseAmount}
-                              onChange={(e) =>
-                                setAmount(Math.floor(Number(e.target.value)))
-                              }
-                            />
-                          </label>
-                          <div className="presets">
-                            {[0.5, 0.75, 1].map((f) => (
-                              <button
-                                key={f}
-                                onClick={() =>
-                                  setAmount(
-                                    Math.max(
-                                      l.min,
-                                      Math.min(
-                                        l.max,
-                                        game.high +
-                                          Math.floor((pot + l.call) * f),
-                                      ),
-                                    ),
-                                  )
-                                }
-                              >
-                                {f === 1
-                                  ? "Pot"
-                                  : f === 0.5
-                                    ? "½ Pot"
-                                    : "¾ Pot"}
-                              </button>
-                            ))}
-                            {l.allIn && (
-                              <button onClick={() => setAmount(l.max)}>
-                                All-in
-                              </button>
-                            )}
-                          </div>
-                          <input
-                            aria-label="ベット額スライダー"
-                            type="range"
-                            min={l.min}
-                            max={l.max}
-                            value={raiseAmount}
-                            onChange={(e) => setAmount(Number(e.target.value))}
-                          />
-                        </div>
-                        <button
-                          className="primary raise"
+                          className={`call ${!l.canCheck && l.call === game.players[0].stack ? "all-in-button" : ""}`}
+                          disabled={!!allIn.cutIn}
                           onClick={() =>
-                            dispatch({ type: "raise", to: raiseAmount })
+                            dispatch({ type: l.canCheck ? "check" : "call" })
                           }
                         >
-                          {raiseAmount ===
-                          game.players[0].bet + game.players[0].stack
-                            ? "All-in"
-                            : game.high
-                              ? "Raise to"
-                              : "Bet"}
-                          <b>{fmt(raiseAmount)}</b>
+                          {l.canCheck ? "Check" : `Call ${fmt(l.call)}`}
+                          {!l.canCheck && l.call === game.players[0].stack && (
+                            <small>ALL-IN</small>
+                          )}
                         </button>
                       </div>
-                    )}
-                  </div>
-                )}
-              </>
+                      {l.canRaise && (
+                        <div className="raise-controls">
+                          <div className="sizing">
+                            <label>
+                              合計ベット額
+                              <input
+                                aria-label="合計ベット額"
+                                type="number"
+                                min={l.min}
+                                max={l.max}
+                                step="1"
+                                value={raiseAmount}
+                                onChange={(e) =>
+                                  setAmount(Math.floor(Number(e.target.value)))
+                                }
+                              />
+                            </label>
+                            <div className="presets">
+                              {[0.5, 0.75, 1].map((f) => (
+                                <button
+                                  key={f}
+                                  onClick={() =>
+                                    setAmount(
+                                      Math.max(
+                                        l.min,
+                                        Math.min(
+                                          l.max,
+                                          game.high +
+                                            Math.floor((pot + l.call) * f),
+                                        ),
+                                      ),
+                                    )
+                                  }
+                                >
+                                  {f === 1
+                                    ? "Pot"
+                                    : f === 0.5
+                                      ? "½ Pot"
+                                      : "¾ Pot"}
+                                </button>
+                              ))}
+                              {l.allIn && (
+                                <button
+                                  className="all-in-shortcut"
+                                  aria-label="All-in"
+                                  onClick={() => setAmount(l.max)}
+                                >
+                                  All-in
+                                </button>
+                              )}
+                            </div>
+                            <input
+                              aria-label="ベット額スライダー"
+                              type="range"
+                              min={l.min}
+                              max={l.max}
+                              value={raiseAmount}
+                              onChange={(e) =>
+                                setAmount(Number(e.target.value))
+                              }
+                            />
+                          </div>
+                          <button
+                            className={`primary raise ${raiseAmount === game.players[0].bet + game.players[0].stack ? "all-in-button" : ""}`}
+                            disabled={!!allIn.cutIn}
+                            onClick={() =>
+                              dispatch({ type: "raise", to: raiseAmount })
+                            }
+                          >
+                            {raiseAmount ===
+                            game.players[0].bet + game.players[0].stack
+                              ? "All-in"
+                              : game.high
+                                ? "Raise to"
+                                : "Bet"}
+                            <b>{fmt(raiseAmount)}</b>
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </>
+              )}
+            </section>
+            {allIn.cutIn && (
+              <AllInCutIn
+                key={allIn.cutIn.key}
+                player={allIn.cutIn.player}
+                amount={allIn.cutIn.amount}
+              />
             )}
-          </section>
+          </div>
+          <ChipLegend />
           {error && (
             <div className="error" role="alert">
               {error}

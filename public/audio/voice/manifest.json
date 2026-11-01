@@ -108,6 +108,11 @@
       "file": "bet.mp3",
       "text": "ベット。",
       "duration": 1.248
+    },
+    {
+      "file": "allin.mp3",
+      "text": "オールイン。",
+      "duration": 1.584
     }
   ]
 }
