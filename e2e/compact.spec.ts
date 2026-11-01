@@ -49,6 +49,17 @@ for (const size of [
       fullPage: false,
     });
     expect(await page.evaluate(() => scrollY)).toBe(0);
+    const portraits = page.locator(".character-portrait");
+    await expect(portraits).toHaveCount(6);
+    const positions = await portraits.evaluateAll(elements => elements.map(el => getComputedStyle(el).backgroundPosition));
+    expect(new Set(positions).size).toBe(6);
+    for (const portrait of await portraits.all()) await expect(portrait).toBeVisible();
+    expect(await portraits.first().evaluate(async el => {
+      const image = new Image();
+      image.src = getComputedStyle(el).backgroundImage.slice(5, -2);
+      await image.decode();
+      return image.naturalWidth;
+    })).toBeGreaterThan(0);
     for (const selector of [
       ".action-panel",
       "button.raise",

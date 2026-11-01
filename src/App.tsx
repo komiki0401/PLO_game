@@ -679,8 +679,20 @@ export default function App() {
                       </span>
                     )}
                     <div className="seat-top">
-                      <span className="avatar">
-                        {i === 0 ? "♠" : p.name[0]}
+                      <span className="seat-identity">
+                        <span
+                          className="character-portrait"
+                          role="img"
+                          aria-label={`${p.name} のキャラクターアイコン`}
+                          data-character={p.id}
+                          style={{
+                            backgroundImage: `url(${import.meta.env.BASE_URL}characters/portraits.webp)`,
+                            backgroundPosition: `${(p.id % 3) * 50}% ${Math.floor(p.id / 3) * 100}%`,
+                          }}
+                        />
+                        <span className="avatar" aria-hidden="true">
+                          {i === 0 ? "♠" : p.name[0]}
+                        </span>
                       </span>
                       <div>
                         <b>
