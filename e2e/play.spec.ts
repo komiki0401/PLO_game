@@ -323,14 +323,16 @@ test("showdown voice occurs once per board even on ties, reselection and replay"
   await page.getByLabel("初期スタック").fill("100");
   await page.getByLabel("ボムポットアンティ").fill("100");
   await page.getByLabel("アニメーション速度").selectOption("4");
-  await page.evaluate(() => {
+  // Seed and start in the same browser task: an old table's pending CPU timer
+  // must not consume random numbers between seeding and dealing this fixture.
+  await page.getByRole("button", { name: "設定を適用して開始 →" }).evaluate((button: HTMLButtonElement) => {
     let seed = 5;
     Math.random = () => {
       seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
       return seed / 4294967296;
     };
+    button.click();
   });
-  await page.getByRole("button", { name: "設定を適用して開始 →" }).click();
   await expect(page.locator(".action-panel .primary")).toBeVisible({
     timeout: 20000,
   });
