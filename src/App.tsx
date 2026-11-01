@@ -15,6 +15,8 @@ import type { Action } from "./game/betting";
 import { TableAudio } from "./audio/tableAudio";
 import { ChipStacks, ChipLegend } from "./components/ChipStacks";
 import { HomeScreen } from "./components/HomeScreen";
+import { CpuRoster } from "./components/CpuRoster";
+import { personalityFor } from "./game/personalities";
 import { AllInCutIn, useAllInCutIn } from "./components/AllInCutIn";
 import { ScoopCelebration } from "./components/ScoopCelebration";
 import { actionAnnouncement } from "./audio/actionAnnouncement";
@@ -695,6 +697,13 @@ export default function App() {
                         <span className="avatar" aria-hidden="true">
                           {i === 0 ? "♠" : p.name[0]}
                         </span>
+                        {i !== 0 && (
+                          <span className="npc-style"
+                            title={personalityFor(p.id).description}
+                            aria-label={`${p.name}：${personalityFor(p.id).label}`}>
+                            {personalityFor(p.id).badge}
+                          </span>
+                        )}
                       </span>
                       <div>
                         <b>
@@ -1309,6 +1318,7 @@ export default function App() {
                 <p>
                   CPUは公開情報からの簡易シミュレーションを使用します。GTOソルバーではありません。CPUの破産した席は休止します。自分のスタックが0になった場合は、結果表示後にスコアを記録してトップ画面へ戻ります。
                 </p>
+                <CpuRoster count={game.players.length} />
                 <button className="primary" onClick={() => setRules(false)}>
                   テーブルに戻る
                 </button>

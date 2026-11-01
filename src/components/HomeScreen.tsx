@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { Settings } from "../game/engine";
 import type { ScoreRecord } from "../records/scores";
+import { CpuRoster } from "./CpuRoster";
 const fmt = (n: number) => n.toLocaleString("en-US");
 const labels = {
   playing: "プレイ中",
@@ -255,6 +256,7 @@ export function HomeScreen({
               換金・入出金・賞金なしのプレイチップ専用ゲーム
             </small>
           </form>
+          <CpuRoster count={draft.count} />
         </section>
       </section>
       {lastResult && (
