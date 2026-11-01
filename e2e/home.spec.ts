@@ -201,6 +201,9 @@ test("homepage layout and score history fit a narrow screen", async ({
     page.getByRole("button", { name: "今すぐプレイ", exact: true }),
   ).toBeInViewport();
   await expect(page.locator(".score-history tbody tr")).toHaveCount(1);
+  await expect(page.locator(".home-stats>div:last-child strong")).toHaveText(
+    "12",
+  );
   await page.screenshot({
     path: `/tmp/plo-home-${test.info().project.name}.png`,
     fullPage: true,

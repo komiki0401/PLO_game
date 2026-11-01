@@ -276,7 +276,14 @@ export function HomeScreen({
         </div>
         <div>
           <small>HANDS PLAYED</small>
-          <strong>{fmt(totalHands)}</strong>
+          <strong>
+            {fmt(
+              Math.max(
+                totalHands,
+                records.reduce((sum, r) => sum + r.hands, 0),
+              ),
+            )}
+          </strong>
         </div>
       </section>
       <section className="score-history" id="score-records">
