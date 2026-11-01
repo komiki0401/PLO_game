@@ -234,7 +234,7 @@ export default function App() {
   }, [game]);
   const view = replay ?? game,
     pot = view.players.reduce((n, p) => n + p.total, 0),
-    humanTurn = !game.done && game.actor === 0;
+    humanTurn = !replay && !game.done && game.actor === 0;
   const l = legal(game, 0),
     raiseAmount = Math.max(l.min, Math.min(l.max, amount));
   const sole = view.awards[0]?.winners[0],
@@ -337,7 +337,14 @@ export default function App() {
   }
   return (
     <main
-      className={view.done && activeStep ? "showdown" : undefined}
+      className={
+        [
+          view.done && activeStep ? "showdown" : "",
+          humanTurn ? "human-turn" : "",
+        ]
+          .filter(Boolean)
+          .join(" ") || undefined
+      }
       onPointerDownCapture={() => unlockAudio()}
       onKeyDownCapture={() => unlockAudio()}
       style={{ "--motion": `${0.5 / settings.speed}s` } as React.CSSProperties}
@@ -350,12 +357,15 @@ export default function App() {
         aria-label="女性ボイス読み上げ"
       />
       <header>
-        <a className="brand" href="#">
-          <span className="brand-icon">♠</span>
-          <span>
-            DOUBLE BOARD <strong>PLO5</strong>
-            <small>THE BOMB POT CLUB</small>
-          </span>
+        <a className="brand" href="#" aria-label="DOUBLE BOARD PLO5 ホーム">
+          <img
+            className="brand-logo"
+            src={`${import.meta.env.BASE_URL}branding/double-board-plo5-logo.webp`}
+            alt="DOUBLE BOARD PLO5"
+            width="1983"
+            height="793"
+            fetchPriority="high"
+          />
         </a>
         <nav>
           <span className="play-money">
@@ -476,6 +486,11 @@ export default function App() {
               key={p.id}
               className={`seat seat-${positions[view.players.length][i]} ${view.actor === i ? "active" : ""} ${p.folded ? "folded" : ""} ${i === 0 ? "human" : ""} ${winning ? "winner" : ""} ${fmt(visibleStack).length > 7 ? "long-stack" : ""}`}
             >
+              {i === 0 && humanTurn && (
+                <span className="your-turn-flag" role="status">
+                  YOUR TURN · あなたの番
+                </span>
+              )}
               <div className="seat-top">
                 <span className="avatar">{i === 0 ? "♠" : p.name[0]}</span>
                 <div>

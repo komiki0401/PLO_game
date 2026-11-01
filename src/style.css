@@ -1882,3 +1882,125 @@ button:disabled {
   font-size: 8px;
   letter-spacing: -0.6px;
 }
+/* Original artwork stays behind the UI; play information retains a quiet surface. */
+body {
+  background-color: #041411;
+  background-image:
+    linear-gradient(180deg, #03110e35, #03110ec9 75%),
+    url("/branding/poker-background.webp");
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+}
+main {
+  background: linear-gradient(
+    90deg,
+    #061815a6,
+    #091d1ad9 15%,
+    #091d1ad9 85%,
+    #061815a6
+  );
+  min-height: 100vh;
+}
+header {
+  height: 126px;
+  border-bottom-color: #d7bc7b35;
+}
+.brand {
+  width: 280px;
+  min-width: 0;
+  gap: 0;
+  flex-shrink: 1;
+}
+.brand-logo {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 112px;
+  object-fit: contain;
+  object-position: left center;
+  filter: drop-shadow(0 3px 8px #0008);
+}
+.table {
+  background-image:
+    radial-gradient(ellipse, #235c4ce0, #12392fed),
+    url("/branding/poker-background.webp");
+  background-size: cover;
+  background-position: center;
+}
+.your-turn-flag {
+  position: absolute;
+  top: -29px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 6px 14px;
+  border: 1px solid #f5d991;
+  border-radius: 20px;
+  background: #e7ca86;
+  color: #17372b;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  white-space: nowrap;
+  box-shadow: 0 0 18px #e1c88040;
+  z-index: 3;
+}
+.human-turn .seat:not(.human) .card {
+  filter: brightness(0.22) saturate(0.3);
+  opacity: 0.85;
+  box-shadow: none;
+}
+.human-turn .seat.human .card {
+  filter: none;
+  box-shadow:
+    0 0 0 1px #e9d29680,
+    0 4px 10px #0009;
+}
+.human-turn .seat.human .seat-top {
+  border-color: #f4d88e;
+  animation: turn-beacon 1.8s ease-in-out infinite;
+}
+.human-turn .action-panel {
+  border-color: #d8bf8070;
+  box-shadow:
+    0 0 0 1px #ddca7d15,
+    0 12px 38px #0004;
+}
+.human-turn .turn-copy .eyebrow {
+  color: #f0d493;
+}
+@keyframes turn-beacon {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 2px #ebcf8525,
+      0 0 20px #ebcf8510;
+  }
+  50% {
+    box-shadow:
+      0 0 0 4px #ebcf8530,
+      0 0 28px #ebcf8530;
+  }
+}
+@media (max-width: 780px) {
+  header {
+    height: 100px;
+  }
+  .brand {
+    width: min(60vw, 228px);
+  }
+  .brand-logo {
+    max-height: 88px;
+  }
+  .your-turn-flag {
+    font-size: 9px;
+    padding: 6px 10px;
+    top: -28px;
+  }
+  main {
+    background: linear-gradient(180deg, #061815ad, #091d1ad9 20%, #061815e8);
+  }
+  body {
+    background-position: 45% top;
+  }
+}

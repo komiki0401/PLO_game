@@ -421,3 +421,75 @@ test("chip piles match balances and large stacks fit a narrow table", async ({
     fullPage: true,
   });
 });
+
+test("new logo and poker backdrop load and human turns dim all opponent cards", async ({
+  page,
+}) => {
+  await page.goto("/");
+  const logo = page.getByRole("img", {
+    name: "DOUBLE BOARD PLO5",
+    exact: true,
+  });
+  await expect(logo).toBeVisible();
+  await expect
+    .poll(() =>
+      logo.evaluate(
+        (el: HTMLImageElement) => el.complete && el.naturalWidth > 0,
+      ),
+    )
+    .toBe(true);
+  expect(
+    await page
+      .locator("body")
+      .evaluate((el) => getComputedStyle(el).backgroundImage),
+  ).toContain("poker-background.webp");
+  await page.getByRole("button", { name: "設定", exact: true }).click();
+  await page.getByLabel("プレイヤー人数").selectOption("6");
+  await page.getByLabel("初期スタック").fill("10000000");
+  await page.getByLabel("ボムポットアンティ").fill("100");
+  await page.getByLabel("CPU難易度").selectOption("EASY");
+  await page.getByLabel("アニメーション速度").selectOption("4");
+  await page.evaluate(() => {
+    let seed = 2;
+    Math.random = () => {
+      seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
+      return seed / 4294967296;
+    };
+  });
+  await page.getByRole("button", { name: "設定を適用して開始 →" }).click();
+  await expect(page.locator("main")).toHaveClass(/human-turn/, {
+    timeout: 15000,
+  });
+  await page.clock.install();
+  await page.clock.pauseAt(new Date(Date.now() + 10));
+  await expect(page.locator(".your-turn-flag")).toBeVisible();
+  await expect(page.locator(".seat:not(.human) .card")).toHaveCount(25);
+  const filters = await page
+    .locator(".seat:not(.human) .card")
+    .evaluateAll((cards) => cards.map((el) => getComputedStyle(el).filter));
+  expect(filters.every((f) => f === "brightness(0.22) saturate(0.3)")).toBe(
+    true,
+  );
+  await expect(page.locator(".human .card")).toHaveCount(5);
+  for (const card of await page.locator(".human .card").all())
+    await expect(card).toHaveCSS("filter", "none");
+  await page.screenshot({
+    path: `/tmp/plo-brand-turn-${test.info().project.name}.png`,
+    fullPage: true,
+  });
+  if (
+    await page.getByRole("button", { name: "Check", exact: true }).isVisible()
+  )
+    await page.getByRole("button", { name: "Check", exact: true }).click();
+  else await page.getByRole("button", { name: /^Call / }).click();
+  await expect(page.locator("main")).not.toHaveClass(/human-turn/);
+  await expect(page.locator(".your-turn-flag")).toHaveCount(0);
+  await expect(
+    page.locator(".seat:not(.human):not(.folded) .card").first(),
+  ).toHaveCSS("filter", "none");
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
+});
