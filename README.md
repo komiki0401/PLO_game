@@ -18,7 +18,7 @@ npx playwright install --with-deps chromium
 npm run test:e2e         # PC / モバイル、2ハンド連続操作・設定・履歴
 ```
 
-既存の /workspace/PLO_game チェックアウトを使います。クラウドの各タスクは隔離済みなので、新規 worktree は不要です。開発サーバーのプロセスは新しい環境で再起動してください。秘密鍵、APIキー、DB、外部サービスは不要です。
+Windowsでは既存の `C:\Users\fabri\source\PLO_game` チェックアウトを使います。開発サーバーのプロセスは新しい環境で再起動してください。秘密鍵、APIキー、DB、外部サービスは不要です。
 
 ## ルール
 
@@ -49,9 +49,11 @@ EASYは緩い参加判断、NORMAL/HARDはランアウトのMonte Carlo推定と
 
 ## GitHub Pages
 
-`.github/workflows/pages.yml` がmainへのpush時にユニットテスト・ビルド・ブラウザテストを実行し、すべて通った場合だけデプロイします。PRでは検証のみ実行します。Viteの相対baseによりリポジトリ配下で動作します。
+`.github/workflows/pages.yml` がmainへのpush時に依存関係の監査・ユニットテスト・ビルド・ブラウザテストを実行し、すべて通った場合だけデプロイします。監査でhigh以上の脆弱性が見つかった場合は公開を停止します。PRでは検証のみ実行します。Viteの相対baseによりリポジトリ配下で動作します。
 
 初回のみGitHubリポジトリの **Settings → Pages → Build and deployment → Source → GitHub Actions** を選択してください。mainへpushし、Actionsの「Test and deploy to GitHub Pages」が成功すると公開されます。標準の公開先は `https://komiki0401.github.io/PLO_game/` です。URLの利用可能性はデプロイ完了後に確認してください。
+
+公開後はスマホのブラウザから上記HTTPS URLを開けます。開発用PCの起動や同じWi-Fiへの接続は不要です。公開されるのはゲーム本体と同梱素材で、Supabaseには接続しません。スコア・統計・設定は引き続き各ブラウザのlocalStorageに保存し、送信しません。ローカルURLの既存記録は削除しませんが、公開URLや別端末には自動移行されません。同じ公開URL・同じブラウザの記録は更新後も維持します。フォントの取得時にはGoogle Fontsへ接続します。
 
 ## ショーダウン表示
 
