@@ -67,7 +67,7 @@ export function five(cards: Card[]): { score: number; category: number } {
   };
 }
 export function evaluate(hole: Card[], board: Card[]): Hand {
-  if (hole.length !== 5 || board.length < 3 || board.length > 5)
+  if (![4, 5].includes(hole.length) || board.length < 3 || board.length > 5)
     throw new Error("Invalid Omaha hand");
   let best: Hand | undefined;
   for (const h of combinations(hole, 2))

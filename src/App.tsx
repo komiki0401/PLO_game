@@ -117,13 +117,15 @@ export default function App() {
     tableAudio = useRef<TableAudio | null>(null),
     previousAudioGame = useRef<State | null>(null);
   const allIn = useAllInCutIn(tableAudio);
-  function showAnteAllIns(
+  function showForcedAllIns(
+    fresh: State,
     players: { name: string; stack: number }[],
-    ante: number,
     ready: Promise<unknown> = Promise.resolve(),
   ) {
     const active = players.filter((p) => p.stack > 0),
-      forced = active.filter((p) => p.stack <= ante);
+      forced = players.filter(
+        (p, i) => p.stack > 0 && fresh.players[i].total === p.stack,
+      );
     if (forced.length)
       allIn.show(
         forced.length === active.length
@@ -463,13 +465,13 @@ export default function App() {
           tableAudio.current?.cue("deal");
         }
       });
-      showAnteAllIns(
+      showForcedAllIns(
+        fresh,
         fresh.players.map((p) => ({ name: p.name, stack: selected.stack })),
-        selected.ante,
         ready,
       );
     } catch {
-      setError("人数・スタック・アンティを確認してください。");
+      setError("人数・スタック・アンティ／ブラインドを確認してください。");
     }
   }
   function next() {
@@ -478,7 +480,7 @@ export default function App() {
       before.current = game.players[0].stack;
       allIn.clear();
       tableAudio.current?.stopVoice();
-      showAnteAllIns(game.players, game.settings.ante);
+      showForcedAllIns(fresh, game.players);
       setGame(fresh);
     } catch (e) {
       setError((e as Error).message);
@@ -532,16 +534,16 @@ export default function App() {
                   e.preventDefault();
                   returnHome();
                 }}
-                aria-label="DOUBLE BOARD PLO5 ホーム"
+                aria-label={`DOUBLE BOARD ${view.settings.mode === "plo4" ? "PLO4" : "PLO5"} ホーム`}
               >
-                <img
+                {view.settings.mode === "plo4" ? <span className="plo4-brand">DOUBLE BOARD <b>PLO4</b></span> : <img
                   className="brand-logo"
                   src={`${import.meta.env.BASE_URL}branding/double-board-plo5-logo.webp`}
                   alt="DOUBLE BOARD PLO5"
                   width="1983"
                   height="793"
                   fetchPriority="high"
-                />
+                />}
               </a>
               <nav>
                 <button aria-label="トップへ" onClick={returnHome}>
@@ -587,7 +589,7 @@ export default function App() {
                     HAND <b>#{view.hand.toString().padStart(3, "0")}</b>
                   </span>
                   <span>
-                    ANTE <b>{fmt(view.settings.ante)}</b>
+                    {view.settings.mode === "plo4" ? "BB" : "ANTE"} <b>{fmt(view.settings.ante)}</b>
                   </span>
                   <span>
                     CPU <b>{view.settings.difficulty}</b>
@@ -599,10 +601,10 @@ export default function App() {
               <div className="table">
                 <div className="rail-line" />
                 <div className="felt-label">
-                  DOUBLE BOARD <span>♠</span> PLO5
+                  DOUBLE BOARD <span>♠</span> {view.settings.mode === "plo4" ? "PLO4" : "PLO5"}
                 </div>
                 <div className="table-meta">
-                  BOMB POT · POT LIMIT · {view.players.length} PLAYERS
+                  {view.settings.mode === "plo4" ? "SB / BB" : "BOMB POT"} · POT LIMIT · {view.players.length} PLAYERS
                 </div>
                 <div className="center-game">
                   <div className="pot">
@@ -613,7 +615,7 @@ export default function App() {
                     <span className="street">
                       {view.done
                         ? "HAND COMPLETE"
-                        : ["FLOP", "TURN", "RIVER"][view.street]}
+                        : view.street === -1 ? "PREFLOP" : ["FLOP", "TURN", "RIVER"][view.street]}
                     </span>
                   </div>
                   {view.boards.map((board, b) => (
@@ -698,6 +700,8 @@ export default function App() {
                         <b>
                           {p.name}
                           {i === 0 && <small> YOU</small>}
+                          {view.blinds?.small === i && <small> SB</small>}
+                          {view.blinds?.big === i && <small> BB</small>}
                         </b>
                         <strong>
                           {fmt(visibleStack)} <span>CHIPS</span>
@@ -1131,7 +1135,7 @@ export default function App() {
             </aside>
           </div>
           <footer>
-            <span>♠ DOUBLE BOARD PLO5</span>
+            <span>♠ DOUBLE BOARD {view.settings.mode === "plo4" ? "PLO4" : "PLO5"}</span>
             <span>プレイチップ専用 · 換金・入出金・賞金なし</span>
             <span>EXACTLY TWO. ALWAYS.</span>
           </footer>
@@ -1184,7 +1188,7 @@ export default function App() {
                     />
                   </label>
                   <label>
-                    ボムポットアンティ
+                    {draft.mode === "plo4" ? "ビッグブラインド" : "ボムポットアンティ"}
                     <input
                       type="number"
                       min="1"
@@ -1286,9 +1290,9 @@ export default function App() {
                   ×
                 </button>
                 <span className="eyebrow">A DIFFERENT KIND OF POKER</span>
-                <h2 id="rules-title">5 cards. 2 boards. 1 pot.</h2>
+                <h2 id="rules-title">{game.settings.mode === "plo4" ? "4 cards. Preflop. 2 boards." : "5 cards. 2 boards. 1 pot."}</h2>
                 <p>
-                  全員がアンティを払い、5枚のホールカードと2つのフロップからスタート。プリフロップのベットはありません。
+                  {game.settings.mode === "plo4" ? "ホールカード4枚、ボード未公開のプリフロップからスタート。アンティはなく、SB（BBの半分を切り捨て、最低1）とBBを支払います。プリフロップはBBの左から、フロップ以降はボタンの左からアクション。2人卓ではボタンがSBでプリフロップは先に、フロップ以降は後に行動します。" : "全員がアンティを払い、5枚のホールカードと2つのフロップからスタート。プリフロップのベットはありません。"}
                 </p>
                 <h3>必ず、2枚 ＋ 3枚。</h3>
                 <p>
@@ -1296,7 +1300,7 @@ export default function App() {
                 </p>
                 <h3>ポットリミット</h3>
                 <p>
-                  コール後のポット額までレイズできます。最低ベットはアンティ額、最低レイズ幅は直前のフルベット／レイズ幅。ショートオールインでの増額が累積してフルレイズ幅に達すると、レイズ権が再開します。金額欄はそのラウンドの合計ベット額です。
+                  コール後のポット額までレイズできます。最低ベットは{game.settings.mode === "plo4" ? "BB" : "アンティ"}額、最低レイズ幅は直前のフルベット／レイズ幅。ショートオールインでの増額が累積してフルレイズ幅に達すると、レイズ権が再開します。金額欄はそのラウンドの合計ベット額です。
                 </p>
                 <h3>分配とオールイン</h3>
                 <p>

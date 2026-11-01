@@ -35,12 +35,13 @@ export function HomeScreen({
   totalHands: number;
 }) {
   const [draft, setDraft] = useState(settings);
+  const fourCard = draft.mode === "plo4";
   const best = Math.max(0, ...records.map((r) => r.peakStack)),
     profit = Math.max(0, ...records.map((r) => r.net));
   return (
     <main className="home-screen">
       <header className="home-header">
-        <span className="eyebrow">THE BOMB POT CLUB</span>
+        <span className="eyebrow">THE DOUBLE BOARD CLUB</span>
         <a href="#score-records">スコア記録を見る ↓</a>
         <span className="play-money">
           <i />
@@ -49,24 +50,33 @@ export function HomeScreen({
       </header>
       <section className="home-intro">
         <div className="home-hero">
-          <span className="eyebrow">5 CARDS · 2 BOARDS · YOUR NEXT MOVE</span>
-          <img
-            className="home-logo"
-            src={`${import.meta.env.BASE_URL}branding/double-board-plo5-logo.webp`}
-            alt="DOUBLE BOARD PLO5"
-            width="1983"
-            height="793"
-            fetchPriority="high"
-          />
+          <span className="eyebrow">
+            {fourCard ? "4 CARDS · PREFLOP" : "5 CARDS · BOMB POT"} · 2 BOARDS
+          </span>
+          {fourCard ? (
+            <div className="home-mode-logo" aria-label="DOUBLE BOARD PLO4">
+              DOUBLE BOARD <strong>PLO4</strong>
+              <small>FOUR CARDS · FROM THE FIRST BET</small>
+            </div>
+          ) : (
+            <img
+              className="home-logo"
+              src={`${import.meta.env.BASE_URL}branding/double-board-plo5-logo.webp`}
+              alt="DOUBLE BOARD PLO5"
+              width="1983"
+              height="793"
+              fetchPriority="high"
+            />
+          )}
           <h1>
             ふたつのボードに、
             <br />
             <em>ひとつの勝負を。</em>
           </h1>
           <p>
-            5枚の手札と、2つのボード。
+            {fourCard ? "4枚の手札で、プリフロップから。" : "5枚の手札と、2つのボード。"}
             <br />
-            CPUとのボムポットを、プレイチップで何度でも。
+            {fourCard ? "ブラインドから始まるCPU戦を、プレイチップで。" : "CPUとのボムポットを、プレイチップで何度でも。"}
           </p>
           <div className="home-quick-start">
             <button
@@ -78,10 +88,10 @@ export function HomeScreen({
               今すぐプレイ <span>→</span>
             </button>
             <small>
-              {draft.count}人卓 · 初期 {fmt(draft.stack)} · アンティ{" "}
+              {fourCard ? "PLO4" : "PLO5"} · {draft.count}人卓 · 初期 {fmt(draft.stack)} · {fourCard ? "BB" : "アンティ"}{" "}
               {fmt(draft.ante)}
             </small>
-            <a href="#home-table-settings">設定を変更する ↓</a>
+            <a href="#home-table-settings">ゲーム・設定を選ぶ ↓</a>
           </div>
           <div className="home-rules">
             <span>♠ ホール2枚 ＋ ボード3枚</span>
@@ -91,8 +101,19 @@ export function HomeScreen({
         </div>
         <section className="home-setup" id="home-table-settings">
           <span className="eyebrow">TAKE YOUR SEAT</span>
-          <h2>テーブルへようこそ</h2>
+          <h2>ゲームを選ぶ</h2>
           <p>設定を選んでゲームを始めましょう。</p>
+          <div className="game-picker" role="group" aria-label="ゲームを選ぶ">
+            <button type="button" aria-pressed={!fourCard} onClick={() => setDraft({ ...draft, mode: "plo5" })}>
+              <strong>PLO5 · ボムポット</strong>
+              <span>手札5枚 · フロップから · 全員アンティ</span>
+            </button>
+            <button type="button" aria-pressed={fourCard} onClick={() => setDraft({ ...draft, mode: "plo4" })}>
+              <strong>PLO4 · プリフロップ</strong>
+              <span>手札4枚 · SB / BB · プリフロップから</span>
+            </button>
+          </div>
+          <p className="mode-note">どちらもダブルボード・ポットリミット。{fourCard ? `SB ${fmt(Math.max(1, Math.floor(draft.ante / 2)))} / BB ${fmt(draft.ante)}、アンティなし。` : "既存の5枚ルールで遊べます。"}</p>
           <form
             id="home-table-form"
             onSubmit={(e) => {
@@ -147,7 +168,7 @@ export function HomeScreen({
                 />
               </label>
               <label>
-                ボムポットアンティ
+                {fourCard ? "ビッグブラインド" : "ボムポットアンティ"}
                 <input
                   type="number"
                   required
@@ -322,7 +343,7 @@ export function HomeScreen({
                         {date(r.updatedAt)} · {labels[r.status]}
                       </b>
                       <small>
-                        {r.players}人 / {r.difficulty} / 初期{" "}
+                        {r.mode === "plo4" ? "PLO4" : "PLO5"} / {r.players}人 / {r.difficulty} / 初期{" "}
                         {fmt(r.initialStack)}
                       </small>
                     </td>
@@ -347,7 +368,7 @@ export function HomeScreen({
         </p>
       </section>
       <footer>
-        <span>♠ DOUBLE BOARD PLO5</span>
+        <span>♠ DOUBLE BOARD PLO CLUB</span>
         <span>プレイチップ専用 · 換金・入出金・賞金なし</span>
       </footer>
     </main>

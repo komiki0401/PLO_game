@@ -1,6 +1,7 @@
 import type { Settings, State } from "../game/engine";
 export type ScoreStatus = "playing" | "bust" | "winner" | "interrupted";
 export type ScoreRecord = {
+  mode?: Settings["mode"];
   id: string;
   startedAt: string;
   updatedAt: string;
@@ -22,6 +23,7 @@ export function newScore(
   now = new Date().toISOString(),
 ): ScoreRecord {
   return {
+    mode: settings.mode ?? "plo5",
     id,
     startedAt: now,
     updatedAt: now,
@@ -74,6 +76,7 @@ function valid(record: unknown): record is ScoreRecord {
   const r = record as ScoreRecord;
   return (
     typeof r.id === "string" &&
+    (r.mode === undefined || r.mode === "plo5" || r.mode === "plo4") &&
     r.id.length > 0 &&
     typeof r.startedAt === "string" &&
     typeof r.updatedAt === "string" &&

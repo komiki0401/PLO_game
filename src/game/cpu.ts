@@ -16,7 +16,7 @@ export function estimate(
     scoops = 0;
   for (let t = 0; t < trials; t++) {
     const d = deck(rng).filter((c) => !known.has(c));
-    const others = Array.from({ length: opponents }, () => d.splice(0, 5));
+    const others = Array.from({ length: opponents }, () => d.splice(0, hole.length));
     let wonBoth = true;
     for (const board of boards) {
       const runout = [...board, ...d.splice(0, 5 - board.length)],
@@ -42,6 +42,7 @@ export function equity(
 // Current-street nuts, including own-card blockers. Draws are represented by the
 // simulated legal turn/river runouts above. Neither function can see actual foes.
 export function nuts(hole: Card[], boards: Card[][]): number {
+  if (boards.some((board) => board.length < 3)) return 0;
   const known = new Set([...hole, ...boards.flat()]);
   const pairs = combinations(
     Array.from({ length: 52 }, (_, i) => i).filter((c) => !known.has(c)),

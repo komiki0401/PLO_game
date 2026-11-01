@@ -2081,6 +2081,39 @@ header {
 .home-setup .settings-grid label {
   font-size: 12px;
 }
+.game-picker {
+  display: grid;
+  gap: 10px;
+  margin: 18px 0 12px;
+}
+.game-picker button {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  padding: 15px;
+  text-align: left;
+  border: 1px solid #88a39155;
+  border-radius: 10px;
+  background: #09251c;
+  color: #dce9dc;
+}
+.game-picker button[aria-pressed="true"] {
+  border-color: #d5b66c;
+  background: #294032;
+  box-shadow: inset 3px 0 #d5b66c;
+}
+.game-picker button:focus-visible {
+  outline: 2px solid #f2d68c;
+  outline-offset: 3px;
+}
+.game-picker strong { font-size: 15px; }
+.game-picker span { font-size: 11px; line-height: 1.6; color: #adc5b6; }
+.home-setup .mode-note { font-size: 11px; line-height: 1.8; margin-bottom: 18px; }
+.plo4-brand { color: #e3d2a1; font-size: clamp(12px, 2vw, 22px); letter-spacing: 1px; }
+.plo4-brand b { display: block; font-size: 1.5em; }
+.home-mode-logo { margin: 20px 0; color: #e3d2a1; font-size: 25px; letter-spacing: 3px; line-height: 1.4; }
+.home-mode-logo strong { display: block; font: 700 68px Georgia, serif; }
+.home-mode-logo small { font-size: 10px; letter-spacing: 1px; }
 .home-play {
   width: 100%;
   margin-top: 18px;
