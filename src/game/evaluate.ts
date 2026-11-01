@@ -17,6 +17,13 @@ export type Hand = {
   hole: Card[];
   board: Card[];
 };
+// Royal flush is the ace-high straight flush. Keep its existing category and
+// score so pot distribution and CPU strength comparisons stay identical.
+export function handName(hand: Pick<Hand, "category" | "cards">): string {
+  return hand.category === 8 && hand.cards.every(card => rank(card) >= 10)
+    ? "ロイヤルストレートフラッシュ"
+    : names[hand.category];
+}
 export function five(cards: Card[]): { score: number; category: number } {
   if (cards.length !== 5) throw new Error("Five cards required");
   const ranks = cards.map(rank).sort((a, b) => b - a);

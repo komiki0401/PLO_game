@@ -10,7 +10,7 @@ import {
 } from "./game/engine";
 import { cpu } from "./game/cpu";
 import { cardText, suit, type Card } from "./game/cards";
-import { names } from "./game/evaluate";
+import { handName } from "./game/evaluate";
 import type { Action } from "./game/betting";
 import { TableAudio } from "./audio/tableAudio";
 import { ChipStacks, ChipLegend } from "./components/ChipStacks";
@@ -789,7 +789,7 @@ export default function App() {
                   </small>
                   <strong>
                     {view.players[activeStep.winner].name}{" "}
-                    <span>— {names[activeStep.hand.category]}</span>
+                    <span>— {handName(activeStep.hand)}</span>
                   </strong>
                 </div>
                 <span className="verdict-note">ホール2枚 ＋ ボード3枚</span>
@@ -834,7 +834,7 @@ export default function App() {
                       SHOWDOWN · BOARD {"AB"[activeBoard]}
                     </span>
                     <h2>
-                      {names[activeStep.hand.category]}
+                      {handName(activeStep.hand)}
                       <small>
                         {view.players[activeStep.winner].name} の最強ハンド
                       </small>
@@ -1072,7 +1072,7 @@ export default function App() {
                     </small>
                     <b>{view.players[step.winner].name}</b>
                     <span>
-                      {names[step.hand.category]}
+                      {handName(step.hand)}
                       {step.award.winners.length > 1 ? " · TIE" : ""}
                     </span>
                   </button>
