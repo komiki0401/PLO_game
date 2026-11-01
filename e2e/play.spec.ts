@@ -249,3 +249,92 @@ test("changing seat count during a CPU turn safely starts a new session", async 
   await expect(page.locator("main")).not.toHaveClass("showdown");
   await expect(page.locator(".card").first()).toHaveCSS("filter", "none");
 });
+
+test("human call and raise use the female action voice", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "音声を有効にする" }).click();
+  await expect(page.getByRole("button", { name: "ミュート" })).toBeVisible();
+  for (const action of ["call", "raise"]) {
+    await page.getByRole("button", { name: "設定", exact: true }).click();
+    await page.getByLabel("プレイヤー人数").selectOption("2");
+    await page.getByLabel("初期スタック").fill("10000");
+    await page.getByLabel("ボムポットアンティ").fill("100");
+    await page.getByLabel("CPU難易度").selectOption("EASY");
+    await page.getByLabel("アニメーション速度").selectOption("4");
+    await page.evaluate(() => {
+      let seed = 2;
+      Math.random = () => {
+        seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
+        return seed / 4294967296;
+      };
+    });
+    await page.getByRole("button", { name: "設定を適用して開始 →" }).click();
+    await expect(page.getByRole("button", { name: /^Call / })).toBeVisible({
+      timeout: 10000,
+    });
+    if (action === "call")
+      await page.getByRole("button", { name: /^Call / }).click();
+    else {
+      await page.getByRole("button", { name: "Pot", exact: true }).click();
+      await page.locator("button.raise").click();
+    }
+    const voice = page.locator(".voice-player");
+    await expect
+      .poll(() => voice.evaluate((el: HTMLAudioElement) => el.currentSrc), {
+        timeout: 10000,
+      })
+      .toMatch(new RegExp(`/${action}\\.mp3$`));
+    await expect
+      .poll(() => voice.evaluate((el: HTMLAudioElement) => el.currentTime))
+      .toBeGreaterThan(0.1);
+  }
+});
+
+test("showdown voice occurs once per board even on ties, reselection and replay", async ({
+  page,
+}) => {
+  await page.addInitScript(() => {
+    const original = HTMLMediaElement.prototype.play;
+    const trace = window as unknown as { roleStarts: string[] };
+    trace.roleStarts = [];
+    HTMLMediaElement.prototype.play = function () {
+      if (/\/[ab]-\d\.mp3$/.test(this.src)) trace.roleStarts.push(this.src);
+      return original.call(this);
+    };
+  });
+  await page.goto("/");
+  await page.getByRole("button", { name: "音声を有効にする" }).click();
+  await expect(page.getByRole("button", { name: "ミュート" })).toBeVisible();
+  await page.getByRole("button", { name: "設定", exact: true }).click();
+  await page.getByLabel("プレイヤー人数").selectOption("3");
+  await page.getByLabel("初期スタック").fill("100");
+  await page.getByLabel("ボムポットアンティ").fill("100");
+  await page.getByLabel("アニメーション速度").selectOption("4");
+  await page.evaluate(() => {
+    let seed = 5;
+    Math.random = () => {
+      seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
+      return seed / 4294967296;
+    };
+  });
+  await page.getByRole("button", { name: "設定を適用して開始 →" }).click();
+  await expect(page.locator(".action-panel .primary")).toBeVisible({
+    timeout: 20000,
+  });
+  await expect(page.locator('.results [data-board="0"]')).toHaveCount(2);
+  const roles = () =>
+    page.evaluate(
+      () => (window as unknown as { roleStarts: string[] }).roleStarts,
+    );
+  expect((await roles()).filter((src) => /\/a-/.test(src))).toHaveLength(1);
+  expect((await roles()).filter((src) => /\/b-/.test(src))).toHaveLength(1);
+  for (const button of await page.locator(".board-label,.results button").all())
+    await button.click();
+  await page.clock.install();
+  await page.clock.pauseAt(new Date(Date.now() + 10));
+  await page.locator(".history-item").first().click();
+  await page.clock.runFor(6000);
+  await page.getByRole("button", { name: "ライブテーブルに戻る →" }).click();
+  await page.clock.runFor(6000);
+  expect(await roles()).toHaveLength(2);
+});

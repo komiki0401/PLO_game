@@ -144,10 +144,19 @@ export default function App() {
     tableAudio.current?.configure(updated);
     localStorage.setItem("plo-settings", JSON.stringify(updated));
   }
+  function commitAction(state: State, a: Action) {
+    const next = act(state, a);
+    if (a.type === "call") void tableAudio.current?.announceAction("call");
+    else if (a.type === "raise")
+      void tableAudio.current?.announceAction(
+        state.high === 0 ? "bet" : "raise",
+      );
+    setGame(next);
+  }
   function dispatch(a: Action) {
     try {
       if (game.done || game.actor !== 0) return;
-      setGame(act(game, a));
+      commitAction(game, a);
       setError("");
     } catch (e) {
       setError((e as Error).message);
@@ -155,15 +164,21 @@ export default function App() {
   }
   useEffect(() => {
     if (game.done || game.actor === 0) return;
+    let cancelled = false;
     const timer = setTimeout(() => {
-      try {
-        const a = cpu(game);
-        setGame(act(game, a));
-      } catch (e) {
-        setError(`CPU: ${(e as Error).message}`);
-      }
+      void (tableAudio.current?.whenIdle() ?? Promise.resolve()).then(() => {
+        if (cancelled) return;
+        try {
+          commitAction(game, cpu(game));
+        } catch (e) {
+          setError(`CPU: ${(e as Error).message}`);
+        }
+      });
     }, 650 / settings.speed);
-    return () => clearTimeout(timer);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
   }, [game, settings.speed]);
   useEffect(() => {
     if (timeline.current.at(-1) !== game) {
@@ -246,6 +261,7 @@ export default function App() {
     complete: boolean;
   }>({ view: null, index: 0, complete: false });
   const [selectedStep, setSelectedStep] = useState<number | null>(null);
+  const spokenBoards = useRef(new WeakMap<State, Set<number>>());
   useEffect(() => {
     setSelectedStep(null);
     if (!steps.length) return;
@@ -254,11 +270,15 @@ export default function App() {
     function show(index: number) {
       setPresentation({ view, index, complete: false });
       tableAudio.current?.cue("reveal");
-      const voice =
-        tableAudio.current?.announce(
-          steps[index].award.board,
-          steps[index].hand.category,
-        ) ?? Promise.resolve();
+      const board = steps[index].award.board;
+      const spoken = spokenBoards.current.get(view) ?? new Set<number>();
+      spokenBoards.current.set(view, spoken);
+      const shouldSpeak = !replay && !spoken.has(board);
+      if (shouldSpeak) spoken.add(board);
+      const voice = shouldSpeak
+        ? (tableAudio.current?.announce(board, steps[index].hand.category) ??
+          Promise.resolve())
+        : Promise.resolve();
       const pause = new Promise<void>((resolve) => {
         timer = setTimeout(resolve, Math.max(1600, 2600 / settings.speed));
       });
@@ -291,6 +311,7 @@ export default function App() {
   function next() {
     try {
       before.current = game.players[0].stack;
+      tableAudio.current?.stopVoice();
       setGame(nextHand(game));
     } catch (e) {
       setError((e as Error).message);
@@ -300,6 +321,7 @@ export default function App() {
     try {
       const fresh = create(draft);
       previousAudioGame.current = null;
+      tableAudio.current?.stopVoice();
       setSettings(draft);
       setGame(fresh);
       before.current = draft.stack;
@@ -415,10 +437,6 @@ export default function App() {
                     const i = steps.findIndex((step) => step.award.board === b);
                     if (i >= 0) {
                       setSelectedStep(i);
-                      void tableAudio.current?.announce(
-                        steps[i].award.board,
-                        steps[i].hand.category,
-                      );
                     }
                   }}
                   aria-pressed={activeBoard === b}
@@ -750,10 +768,6 @@ export default function App() {
                 disabled={!showdownComplete}
                 onClick={() => {
                   setSelectedStep(i);
-                  void tableAudio.current?.announce(
-                    step.award.board,
-                    step.hand.category,
-                  );
                 }}
                 className={activeStep === step ? "selected" : ""}
                 data-board={step.award.board}

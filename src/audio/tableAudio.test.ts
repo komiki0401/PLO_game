@@ -122,6 +122,7 @@ describe("table audio playback and cleanup", () => {
     const { audio, player, blocked } = setup();
     await audio.unlock();
     const first = audio.announce(0, 5);
+    await Promise.resolve();
     player.dispatchEvent(new Event("error"));
     await first;
     expect(blocked).toHaveBeenCalledOnce();
@@ -157,7 +158,7 @@ describe("shipped speech assets", () => {
       readFileSync(new URL("manifest.json", root), "utf8"),
     );
     expect(manifest.voice).toBe("jf_alpha");
-    expect(manifest.clips).toHaveLength(18);
+    expect(manifest.clips).toHaveLength(21);
     const files = new Set(
       manifest.clips.map((clip: { file: string }) => clip.file),
     );
@@ -169,10 +170,63 @@ describe("shipped speech assets", () => {
         ).toBeGreaterThan(10000);
       }
     expect(
-      manifest.clips.every(
-        (c: { duration: number; text: string }) =>
-          c.duration > 1 && c.duration < 8 && c.text.startsWith("ボード"),
-      ),
+      manifest.clips
+        .filter((c: { file: string }) => /^[ab]-/.test(c.file))
+        .every(
+          (c: { duration: number; text: string }) =>
+            c.duration > 1 && c.duration < 8 && c.text.startsWith("ボード"),
+        ),
     ).toBe(true);
+  });
+});
+
+describe("action speech scheduling", () => {
+  it("reads consecutive calls and raises in order without overlapping", async () => {
+    const { audio, player } = setup();
+    await audio.unlock();
+    const first = audio.announceAction("call");
+    const second = audio.announceAction("raise");
+    await Promise.resolve();
+    expect(player.src).toMatch(/call.mp3$/);
+    player.dispatchEvent(new Event("ended"));
+    await first;
+    await Promise.resolve();
+    expect(player.src).toMatch(/raise.mp3$/);
+    player.dispatchEvent(new Event("ended"));
+    await second;
+    await audio.whenIdle();
+    expect(vi.getTimerCount()).toBe(0);
+  });
+  it("does not cut off the final call when showdown begins", async () => {
+    const { audio, player } = setup();
+    await audio.unlock();
+    const call = audio.announceAction("call");
+    const showdown = audio.announce(0, 4);
+    await Promise.resolve();
+    expect(player.src).toMatch(/call.mp3$/);
+    player.dispatchEvent(new Event("ended"));
+    await call;
+    await Promise.resolve();
+    expect(player.src).toMatch(/a-4.mp3$/);
+    player.dispatchEvent(new Event("ended"));
+    await showdown;
+  });
+  it("cancels queued voices on mute or session change", async () => {
+    const { audio, player } = setup();
+    await audio.unlock();
+    const first = audio.announceAction("call");
+    const queued = audio.announceAction("raise");
+    await Promise.resolve();
+    audio.stopVoice();
+    await Promise.all([first, queued]);
+    expect(player.src).not.toMatch(/raise.mp3$/);
+    expect(vi.getTimerCount()).toBe(0);
+  });
+  it("ships all action clips", () => {
+    const root = new URL("../../public/audio/voice/", import.meta.url);
+    for (const action of ["call", "raise", "bet"])
+      expect(statSync(new URL(`${action}.mp3`, root)).size).toBeGreaterThan(
+        3000,
+      );
   });
 });

@@ -1,3 +1,6 @@
+export type SpokenAction = "call" | "raise" | "bet";
+export const actionVoicePath = (action: SpokenAction) =>
+  `${import.meta.env.BASE_URL}audio/voice/${action}.mp3`;
 export type AudioPrefs = { sound: boolean; voice: boolean; volume: number };
 export type SoundCue =
   "deal" | "check" | "chips" | "fold" | "board" | "reveal" | "win" | "scoop";
@@ -13,6 +16,8 @@ export class TableAudio {
   private unlocked = false;
   private unlocking: Promise<boolean> | null = null;
   private finishVoice: (() => void) | null = null;
+  private actionTail: Promise<void> = Promise.resolve();
+  private generation = 0;
   constructor(
     private player: HTMLAudioElement,
     private onBlocked: () => void,
@@ -70,13 +75,39 @@ export class TableAudio {
       return Promise.resolve(false);
     }
   }
-  stopVoice() {
+  private interruptVoice() {
     this.player.pause();
     this.finishVoice?.();
     this.finishVoice = null;
   }
+  stopVoice() {
+    this.generation++;
+    this.actionTail = Promise.resolve();
+    this.interruptVoice();
+  }
+  whenIdle(): Promise<void> {
+    return this.actionTail;
+  }
+  announceAction(action: SpokenAction): Promise<void> {
+    const generation = this.generation;
+    const queued = this.actionTail.then(() =>
+      generation === this.generation
+        ? this.playVoice(actionVoicePath(action))
+        : undefined,
+    );
+    this.actionTail = queued;
+    return queued;
+  }
   announce(board: number, category: number): Promise<void> {
-    this.stopVoice();
+    const generation = this.generation;
+    return this.actionTail.then(() =>
+      generation === this.generation
+        ? this.playVoice(voicePath(board, category))
+        : undefined,
+    );
+  }
+  private playVoice(source: string): Promise<void> {
+    this.interruptVoice();
     if (
       document.hidden ||
       !this.prefs.voice ||
@@ -107,7 +138,7 @@ export class TableAudio {
       this.finishVoice = cleanup;
       this.player.addEventListener("ended", cleanup, { once: true });
       this.player.addEventListener("error", failed, { once: true });
-      this.player.src = voicePath(board, category);
+      this.player.src = source;
       this.player.play().catch(failed);
     });
   }

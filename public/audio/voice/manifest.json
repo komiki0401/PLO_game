@@ -93,6 +93,21 @@
       "file": "b-8.mp3",
       "text": "ボードビー。ストレートフラッシュ。",
       "duration": 2.664
+    },
+    {
+      "file": "call.mp3",
+      "text": "コール。",
+      "duration": 1.32
+    },
+    {
+      "file": "raise.mp3",
+      "text": "レイズ。",
+      "duration": 1.416
+    },
+    {
+      "file": "bet.mp3",
+      "text": "ベット。",
+      "duration": 1.248
     }
   ]
 }
