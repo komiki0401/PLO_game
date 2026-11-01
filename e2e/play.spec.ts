@@ -107,6 +107,7 @@ test("showdown reveals exactly five winning cards on A, pauses, then reveals B",
     "0 CHIPS",
     "0 CHIPS",
   ]);
+  await expect(page.locator('.chip-rack[data-amount="0"]')).toHaveCount(2);
   await expect(verdict.locator("strong span")).not.toBeEmpty();
   await expect(page.locator(".card.lit")).toHaveCount(5);
   await expect(
@@ -337,4 +338,86 @@ test("showdown voice occurs once per board even on ties, reselection and replay"
   await page.getByRole("button", { name: "ライブテーブルに戻る →" }).click();
   await page.clock.runFor(6000);
   expect(await roles()).toHaveLength(2);
+});
+
+test("chip piles match balances and large stacks fit a narrow table", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await page.clock.install();
+  await page.clock.pauseAt(new Date(Date.now() + 10));
+  await expect(page.locator(".chip-rack")).toHaveCount(6);
+  const checkStacks = async () => {
+    const stacks = await page.locator(".seat").evaluateAll((seats) =>
+      seats.map((seat) => {
+        const rack = seat.querySelector<HTMLElement>(".chip-rack")!,
+          header = seat.querySelector<HTMLElement>(".seat-top strong")!,
+          holes = seat.querySelector<HTMLElement>(".hole-cards")!;
+        return {
+          amount: Number(rack.dataset.amount),
+          display: Number(header.textContent!.replace(/[^0-9]/g, "")),
+          total: Array.from(
+            rack.querySelectorAll<HTMLElement>(".chip-column"),
+          ).reduce(
+            (sum, p) => sum + Number(p.dataset.value) * Number(p.dataset.count),
+            0,
+          ),
+          maxPile: Math.max(
+            0,
+            ...Array.from(rack.querySelectorAll(".chip-pile")).map(
+              (p) => p.children.length,
+            ),
+          ),
+          noOverlap:
+            rack.getBoundingClientRect().bottom <=
+            holes.getBoundingClientRect().top + 0.5,
+          numberFits: header.scrollWidth <= header.clientWidth + 1,
+        };
+      }),
+    );
+    for (const s of stacks) {
+      expect(s.total).toBe(s.amount);
+      expect(s.display).toBe(s.amount);
+      expect(s.maxPile).toBeLessThanOrEqual(8);
+      expect(s.noOverlap).toBe(true);
+      expect(s.numberFits).toBe(true);
+    }
+  };
+  await checkStacks();
+  expect(
+    await page
+      .locator(".seat:not(.human) .seat-top strong")
+      .first()
+      .evaluate((el) => parseFloat(getComputedStyle(el).fontSize)),
+  ).toBeGreaterThanOrEqual(18);
+  await page.setViewportSize({ width: 320, height: 844 });
+  await page.getByRole("button", { name: "設定", exact: true }).click();
+  await page.getByLabel("初期スタック").fill("10000000");
+  await page.getByLabel("ボムポットアンティ").fill("1");
+  await page.getByRole("button", { name: "設定を適用して開始 →" }).click();
+  await expect(page.locator('.chip-rack[data-amount="9999999"]')).toHaveCount(
+    6,
+  );
+  await checkStacks();
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
+  const overlap = await page.locator(".seat").evaluateAll((seats) => {
+    const rects = seats.map((s) => s.getBoundingClientRect());
+    return rects.some((a, i) =>
+      rects.some(
+        (b, j) =>
+          i < j &&
+          Math.min(a.right, b.right) > Math.max(a.left, b.left) + 1 &&
+          Math.min(a.bottom, b.bottom) > Math.max(a.top, b.top) + 1,
+      ),
+    );
+  });
+  expect(overlap).toBe(false);
+  await page.screenshot({
+    path: `/tmp/plo-chips-large-${test.info().project.name}.png`,
+    fullPage: true,
+  });
 });

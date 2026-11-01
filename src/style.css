@@ -1551,3 +1551,334 @@ button:disabled {
   filter: brightness(0.28) saturate(0.45);
   box-shadow: none;
 }
+/* Stacks use denomination colors and exact counts; tall piles are capped visually. */
+.chip-rack {
+  height: 48px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  gap: 7px;
+  padding: 2px 2px 0;
+  isolation: isolate;
+  pointer-events: none;
+}
+.chip-column {
+  width: 26px;
+  min-width: 0;
+  flex-shrink: 1;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+}
+.chip-pile {
+  height: 32px;
+  width: 100%;
+  position: relative;
+}
+.chip-disc {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 11px;
+  border-radius: 50%;
+  background:
+    repeating-conic-gradient(
+      from 15deg,
+      #ffffff08 0deg 38deg,
+      #ffffffbd 38deg 53deg,
+      #ffffff08 53deg 72deg
+    ),
+    var(--chip-color);
+  border: 1px solid #ffffff80;
+  box-shadow:
+    0 2px 0 color-mix(in srgb, var(--chip-color), #000 45%),
+    0 3px 3px #0007;
+  color: var(--chip-ink);
+  font-size: 7px;
+  line-height: 9px;
+  font-weight: 800;
+  text-align: center;
+}
+.chip-top {
+  z-index: 1;
+  background:
+    radial-gradient(
+      ellipse at center,
+      var(--chip-color) 0 52%,
+      transparent 55%
+    ),
+    repeating-conic-gradient(
+      from 15deg,
+      var(--chip-color) 0deg 38deg,
+      #ffffffe0 38deg 53deg,
+      var(--chip-color) 53deg 72deg
+    );
+}
+.chip-count {
+  font-size: 10px;
+  line-height: 14px;
+  color: #e0d4b4;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 1px 3px #000;
+}
+.no-chips {
+  font-size: 8px;
+  letter-spacing: 1px;
+  color: #7e9d91;
+  align-self: center;
+  border-bottom: 1px dashed #7e9d9140;
+  padding: 5px 10px;
+}
+.chip-legend {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin: 16px 0 21px;
+  color: #b3c6b7;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+.chip-legend > span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.chip-legend > span:first-child {
+  font-size: 8px;
+  letter-spacing: 1.7px;
+  color: #88a495;
+}
+.chip-legend i {
+  width: 13px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px dashed #ffffffb0;
+  box-shadow: 0 2px 0 #0007;
+}
+.chip-legend small {
+  font-size: 9px;
+  color: #8da89b;
+}
+.seat {
+  width: 190px;
+}
+.seat-top {
+  padding: 10px 11px;
+}
+.seat-top > div {
+  min-width: 0;
+}
+.avatar {
+  flex-shrink: 0;
+}
+.seat-top strong {
+  font-size: 22px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.3px;
+  white-space: nowrap;
+  line-height: 1.2;
+}
+.seat-top strong span {
+  font-size: 7px;
+  letter-spacing: 0.5px;
+}
+.seat-0 .seat-top {
+  width: 220px;
+}
+.seat-0 .seat-top strong {
+  font-size: 25px;
+}
+.long-stack .seat-top strong {
+  font-size: 18px;
+}
+.long-stack .seat-top strong span {
+  display: none;
+}
+.seat-status {
+  min-height: 25px;
+}
+.bet-chip {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+.payout {
+  font-size: 14px;
+  font-weight: 600;
+}
+.pot strong {
+  font-size: 34px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+.board-label small {
+  font-size: 12px;
+  font-weight: 600;
+}
+.arena {
+  height: 725px;
+}
+.center-game {
+  top: 104px;
+}
+@media (max-width: 1100px) and (min-width: 781px) {
+  .seat-1,
+  .seat-5 {
+    width: 168px;
+  }
+  .seat-top strong {
+    font-size: 20px;
+  }
+}
+@media (max-width: 780px) {
+  .center-game {
+    top: 170px;
+  }
+  .arena {
+    height: 890px;
+  }
+  .table {
+    bottom: 185px;
+  }
+  .seat {
+    width: 120px;
+  }
+  .seat-top {
+    padding: 8px 7px;
+    gap: 6px;
+  }
+  .seat-top strong {
+    font-size: 18px;
+    letter-spacing: -0.4px;
+  }
+  .seat-top strong span {
+    display: none;
+  }
+  .seat-0 {
+    width: 290px;
+  }
+  .seat-0 .seat-top {
+    width: 190px;
+  }
+  .seat-0 .seat-top strong {
+    font-size: 23px;
+  }
+  .long-stack .avatar {
+    display: none;
+  }
+  .long-stack .seat-top strong {
+    font-size: 16px;
+  }
+  .seat-0.long-stack .avatar {
+    display: grid;
+  }
+  .seat-0.long-stack .seat-top strong {
+    font-size: 19px;
+  }
+  .chip-rack {
+    height: 42px;
+    gap: 4px;
+  }
+  .chip-column {
+    width: 20px;
+  }
+  .chip-pile {
+    height: 29px;
+  }
+  .chip-disc {
+    height: 9px;
+    font-size: 6px;
+    line-height: 7px;
+  }
+  .chip-count {
+    font-size: 9px;
+    line-height: 12px;
+  }
+  .no-chips {
+    font-size: 7px;
+  }
+  .seat-0 .chip-rack {
+    height: 47px;
+    gap: 8px;
+  }
+  .seat-0 .chip-column {
+    width: 26px;
+  }
+  .seat-0 .chip-disc {
+    height: 11px;
+    line-height: 9px;
+    font-size: 7px;
+  }
+  .seat-0 .chip-count {
+    font-size: 11px;
+    line-height: 14px;
+  }
+  .seat-1,
+  .seat-5 {
+    top: 510px;
+  }
+  .pot strong {
+    font-size: 30px;
+  }
+  .board-label small {
+    font-size: 10px;
+  }
+  .bet-chip {
+    font-size: 11px;
+    padding: 4px 7px;
+  }
+  .payout {
+    font-size: 12px;
+  }
+  .chip-legend {
+    gap: 10px;
+    margin: 12px 0 18px;
+    font-size: 10px;
+  }
+  .chip-legend small {
+    width: 100%;
+    text-align: center;
+    font-size: 8px;
+  }
+}
+@media (max-width: 370px) {
+  .arena {
+    height: 975px;
+  }
+  .seat {
+    width: 110px;
+  }
+  .seat-0 {
+    width: 280px;
+  }
+  .seat-2,
+  .seat-4 {
+    top: 165px;
+  }
+  .seat-1,
+  .seat-5 {
+    top: 585px;
+  }
+  .center-game {
+    top: 235px;
+  }
+  .chip-rack {
+    gap: 3px;
+  }
+  .chip-column {
+    width: 18px;
+  }
+  .seat-top strong {
+    font-size: 17px;
+  }
+  .long-stack .seat-top strong {
+    font-size: 15px;
+  }
+}
+.long-stack .chip-count {
+  font-size: 8px;
+  letter-spacing: -0.6px;
+}

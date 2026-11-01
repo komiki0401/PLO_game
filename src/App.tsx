@@ -13,6 +13,7 @@ import { cardText, suit, type Card } from "./game/cards";
 import { names } from "./game/evaluate";
 import type { Action } from "./game/betting";
 import { TableAudio } from "./audio/tableAudio";
+import { ChipStacks, ChipLegend } from "./components/ChipStacks";
 const fmt = (n: number) => n.toLocaleString("en-US");
 const positions: Record<number, number[]> = {
   2: [0, 3],
@@ -466,11 +467,14 @@ export default function App() {
         </div>
         {view.players.map((p, i) => {
           const shown = i === 0 || (view.done && !p.folded),
-            winning = showdownComplete && (view.payouts[p.id] ?? 0) > 0;
+            winning = showdownComplete && (view.payouts[p.id] ?? 0) > 0,
+            visibleStack =
+              p.stack -
+              (view.done && !showdownComplete ? (view.payouts[p.id] ?? 0) : 0);
           return (
             <div
               key={p.id}
-              className={`seat seat-${positions[view.players.length][i]} ${view.actor === i ? "active" : ""} ${p.folded ? "folded" : ""} ${i === 0 ? "human" : ""} ${winning ? "winner" : ""}`}
+              className={`seat seat-${positions[view.players.length][i]} ${view.actor === i ? "active" : ""} ${p.folded ? "folded" : ""} ${i === 0 ? "human" : ""} ${winning ? "winner" : ""} ${fmt(visibleStack).length > 7 ? "long-stack" : ""}`}
             >
               <div className="seat-top">
                 <span className="avatar">{i === 0 ? "♠" : p.name[0]}</span>
@@ -480,13 +484,7 @@ export default function App() {
                     {i === 0 && <small> YOU</small>}
                   </b>
                   <strong>
-                    {fmt(
-                      p.stack -
-                        (view.done && !showdownComplete
-                          ? (view.payouts[p.id] ?? 0)
-                          : 0),
-                    )}{" "}
-                    <span>CHIPS</span>
+                    {fmt(visibleStack)} <span>CHIPS</span>
                   </strong>
                 </div>
                 {view.dealer === i && (
@@ -495,6 +493,7 @@ export default function App() {
                   </span>
                 )}
               </div>
+              <ChipStacks amount={visibleStack} owner={p.name} />
               <div className="hole-cards">
                 {p.hole.length ? (
                   p.hole.map((c, n) => (
@@ -530,6 +529,7 @@ export default function App() {
           );
         })}
       </section>
+      <ChipLegend />
       {view.done && activeStep && (
         <section
           className="showdown-verdict"
