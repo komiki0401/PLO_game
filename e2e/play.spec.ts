@@ -4,6 +4,12 @@ test.afterEach(async ({ page }) => {
   expect(pageErrors.get(page) ?? []).toEqual([]);
 });
 test.setTimeout(60000);
+async function openTable(page: Page) {
+  await page.goto("/");
+  await page
+    .getByRole("button", { name: "ゲームを始める", exact: true })
+    .click();
+}
 test.beforeEach(async ({ page }) => {
   const errors: string[] = [];
   pageErrors.set(page, errors);
@@ -25,9 +31,12 @@ test("human vs five CPUs: play through two hands, history, replay, settings", as
 }) => {
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
-  await page.goto("/");
+  await openTable(page);
   await expect(page.getByRole("heading", { name: /Two boards/ })).toBeVisible();
   await page.getByRole("button", { name: /設定/ }).click();
+  await page.getByLabel("CPU難易度").selectOption("EASY");
+  await page.getByLabel("初期スタック").fill("10000000");
+  await page.getByLabel("ボムポットアンティ").fill("1");
   await page.getByLabel("アニメーション速度").selectOption("4");
   await page.getByRole("button", { name: "設定を適用して開始 →" }).click();
   await expect(page.locator(".seat")).toHaveCount(6);
@@ -65,7 +74,7 @@ test("human vs five CPUs: play through two hands, history, replay, settings", as
   expect(errors).toEqual([]);
 });
 test("bet controls, rules, and heads-up settings", async ({ page }) => {
-  await page.goto("/");
+  await openTable(page);
   await page.getByRole("button", { name: /ルール/ }).click();
   await expect(
     page.getByRole("heading", { name: "必ず、2枚 ＋ 3枚。" }),
@@ -92,7 +101,7 @@ test("bet controls, rules, and heads-up settings", async ({ page }) => {
 test("showdown reveals exactly five winning cards on A, pauses, then reveals B", async ({
   page,
 }) => {
-  await page.goto("/");
+  await openTable(page);
   await page.getByRole("button", { name: "設定", exact: true }).click();
   await page.getByLabel("プレイヤー人数").selectOption("2");
   await page.getByLabel("初期スタック").fill("100");
@@ -175,7 +184,7 @@ test("bundled female voice plays A then B, waits for speech, and mutes immediate
   });
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
-  await page.goto("/");
+  await openTable(page);
   await page.getByRole("button", { name: "音声を有効にする" }).click();
   await expect(page.getByRole("button", { name: "ミュート" })).toBeVisible();
   await page.getByRole("button", { name: "設定", exact: true }).click();
@@ -238,7 +247,7 @@ test("bundled female voice plays A then B, waits for speech, and mutes immediate
 test("changing seat count during a CPU turn safely starts a new session", async ({
   page,
 }) => {
-  await page.goto("/");
+  await openTable(page);
   await expect(page.locator(".seat-3.active")).toBeVisible({ timeout: 10000 });
   await page.clock.install();
   await page.clock.pauseAt(new Date(Date.now() + 10));
@@ -252,7 +261,7 @@ test("changing seat count during a CPU turn safely starts a new session", async 
 });
 
 test("human call and raise use the female action voice", async ({ page }) => {
-  await page.goto("/");
+  await openTable(page);
   await page.getByRole("button", { name: "音声を有効にする" }).click();
   await expect(page.getByRole("button", { name: "ミュート" })).toBeVisible();
   for (const action of ["call", "raise"]) {
@@ -303,7 +312,7 @@ test("showdown voice occurs once per board even on ties, reselection and replay"
       return original.call(this);
     };
   });
-  await page.goto("/");
+  await openTable(page);
   await page.getByRole("button", { name: "音声を有効にする" }).click();
   await expect(page.getByRole("button", { name: "ミュート" })).toBeVisible();
   await page.getByRole("button", { name: "設定", exact: true }).click();
@@ -343,7 +352,7 @@ test("showdown voice occurs once per board even on ties, reselection and replay"
 test("chip piles match balances and large stacks fit a narrow table", async ({
   page,
 }) => {
-  await page.goto("/");
+  await openTable(page);
   await page.clock.install();
   await page.clock.pauseAt(new Date(Date.now() + 10));
   await expect(page.locator(".chip-rack")).toHaveCount(6);
@@ -425,7 +434,7 @@ test("chip piles match balances and large stacks fit a narrow table", async ({
 test("new logo and poker backdrop load and human turns dim all opponent cards", async ({
   page,
 }) => {
-  await page.goto("/");
+  await openTable(page);
   const logo = page.getByRole("img", {
     name: "DOUBLE BOARD PLO5",
     exact: true,
