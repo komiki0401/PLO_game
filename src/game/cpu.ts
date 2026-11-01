@@ -3,6 +3,7 @@ import { evaluate, five } from "./evaluate";
 import { legal, type Action } from "./betting";
 import type { State } from "./engine";
 import { personalityFor } from "./personalities";
+import { betSizing } from "./betSizing";
 // Only public information and this seat's hole cards are used. Opponent holes and
 // the actual undealt deck are deliberately excluded from every simulation.
 export function estimate(
@@ -128,8 +129,9 @@ export function chooseCpuAction(s: State, read: CpuRead, rng = Math.random): Act
     ? strongMade && (strength >= profile.raiseThreshold || read.nutShare > 0)
     : strength >= profile.raiseThreshold;
   const bluff = profile.bluff * (level === "EASY" ? 0.5 : level === "HARD" ? 1.25 : 1);
+  const sizing = betSizing(l);
   if (
-    l.canRaise &&
+    sizing.canRaise &&
     ((canValueRaise && rng() < profile.raiseChance) || (bluff > 0 && rng() < bluff))
   ) {
     const fraction = Math.min(1, profile.sizing + (read.scoop > 0.65 ? 0.15 : 0));
@@ -137,7 +139,7 @@ export function chooseCpuAction(s: State, read: CpuRead, rng = Math.random): Act
       l.min,
       Math.min(l.max, s.high + Math.floor((pot + l.call) * fraction)),
     );
-    return { type: "raise", to: target };
+    return { type: "raise", to: sizing.normalize(target) };
   }
   return l.canCheck ? { type: "check" } : { type: "call" };
 }

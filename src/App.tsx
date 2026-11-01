@@ -12,6 +12,7 @@ import { cpu } from "./game/cpu";
 import { cardText, suit, type Card } from "./game/cards";
 import { handName } from "./game/evaluate";
 import type { Action } from "./game/betting";
+import { BET_STEP, betSizing } from "./game/betSizing";
 import { TableAudio } from "./audio/tableAudio";
 import { ChipStacks, ChipLegend } from "./components/ChipStacks";
 import { HomeScreen } from "./components/HomeScreen";
@@ -307,7 +308,8 @@ export default function App() {
     pot = view.players.reduce((n, p) => n + p.total, 0),
     humanTurn = screen === "table" && !replay && !game.done && game.actor === 0;
   const l = legal(game, 0),
-    raiseAmount = Math.max(l.min, Math.min(l.max, amount));
+    sizing = betSizing(l),
+    raiseAmount = sizing.normalize(amount);
   const sole = view.awards[0]?.winners[0],
     scoop =
       view.awards.length > 0 &&
@@ -941,17 +943,17 @@ export default function App() {
                           )}
                         </button>
                       </div>
-                      {l.canRaise && (
+                      {sizing.canRaise && (
                         <div className="raise-controls">
                           <div className="sizing">
                             <label>
-                              合計ベット額
+                              合計ベット額（100単位）
                               <input
                                 aria-label="合計ベット額"
                                 type="number"
-                                min={l.min}
-                                max={l.max}
-                                step="1"
+                                min={sizing.min}
+                                max={l.allIn ? l.max : sizing.max}
+                                step={raiseAmount % BET_STEP ? "any" : BET_STEP}
                                 value={raiseAmount}
                                 onChange={(e) =>
                                   setAmount(Math.floor(Number(e.target.value)))
@@ -964,13 +966,8 @@ export default function App() {
                                   key={f}
                                   onClick={() =>
                                     setAmount(
-                                      Math.max(
-                                        l.min,
-                                        Math.min(
-                                          l.max,
-                                          game.high +
-                                            Math.floor((pot + l.call) * f),
-                                        ),
+                                      sizing.normalize(
+                                        game.high + Math.floor((pot + l.call) * f),
                                       ),
                                     )
                                   }
@@ -995,9 +992,11 @@ export default function App() {
                             <input
                               aria-label="ベット額スライダー"
                               type="range"
-                              min={l.min}
-                              max={l.max}
-                              value={raiseAmount}
+                              min={sizing.min}
+                              max={sizing.max}
+                              step={BET_STEP}
+                              disabled={!sizing.hasRegular}
+                              value={Math.min(raiseAmount, sizing.max)}
                               onChange={(e) =>
                                 setAmount(Number(e.target.value))
                               }
@@ -1311,6 +1310,7 @@ export default function App() {
                 <p>
                   コール後のポット額までレイズできます。最低ベットは{game.settings.mode === "plo4" ? "BB" : "アンティ"}額、最低レイズ幅は直前のフルベット／レイズ幅。ショートオールインでの増額が累積してフルレイズ幅に達すると、レイズ権が再開します。金額欄はそのラウンドの合計ベット額です。
                 </p>
+                <p>通常のベット・レイズは合計額を100単位で指定します。ポット上限を超えない範囲に切り下げ、最低額は100単位に切り上げます。コール・ブラインド・全額オールインは端数に対応します。</p>
                 <h3>分配とオールイン</h3>
                 <p>
                   各メイン・サイドポットを半分ずつ両ボードに分配。奇数の1チップはAへ。同点の余りはボタン左から時計回り。未コール分は返却し、フォールドした人は受け取れません。

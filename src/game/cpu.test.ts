@@ -107,7 +107,11 @@ describe("fixed NPC personalities", () => {
     for (const difficulty of ["EASY", "NORMAL", "HARD"] as const) {
       const rng = seeded(17);
       let s = create({ ...defaults, mode, difficulty, stack: 1000 }, rng), steps = 0;
-      while (!s.done && steps++ < 200) s = act(s, cpu(s, rng));
+      while (!s.done && steps++ < 200) {
+        const action = cpu(s, rng), player = s.players[s.actor];
+        if (action.type === "raise") expect(action.to % 100 === 0 || action.to === player.bet + player.stack).toBe(true);
+        s = act(s, action);
+      }
       expect(s.done).toBe(true);
       expect(s.players.reduce((n, p) => n + p.stack, 0)).toBe(s.initialTotal);
       const cards = [...s.players.flatMap(p => p.hole), ...s.boards.flat(), ...s.deck];
