@@ -86,14 +86,14 @@ describe("no-limit Texas Hold’em", () => {
     const s: Betting = { noLimit: true, high: 0, lastRaise: 100, minBet: 100, players:
       [50, 1000, 1000].map(stack => ({ stack, bet: 0, total: 0, folded: false, actedAt: null })) };
     applyBet(s, 0, { type: "raise", to: 50 });
-    expect(legal(s, 1).min).toBe(100);
-    applyBet(s, 1, { type: "raise", to: 100 });
+    expect(legal(s, 1).min).toBe(150);
+    applyBet(s, 1, { type: "raise", to: 150 });
     expect(s.lastRaise).toBe(100);
-    expect(legal(s, 2).min).toBe(200);
-    s.players[2].actedAt = 100;
-    s.high = 150;
-    expect(legal(s, 2).canRaise).toBe(false);
+    expect(legal(s, 2).min).toBe(250);
+    s.players[2].actedAt = 150;
     s.high = 200;
+    expect(legal(s, 2).canRaise).toBe(false);
+    s.high = 250;
     expect(legal(s, 2).canRaise).toBe(true);
   });
   it("returns unmatched preflop bets without exposing a board", () => {
