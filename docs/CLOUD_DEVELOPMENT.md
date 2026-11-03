@@ -1,0 +1,69 @@
+# クラウドで開発を再開する
+
+## 現在の状態
+
+- リポジトリ: https://github.com/komiki0401/PLO_game
+- 基準ブランチ: `main`
+- 公開URL: https://komiki0401.github.io/PLO_game/
+- Node.js 24 / npm 11。`.nvmrc` とGitHub ActionsのNode.js指定をそろえています。
+- React + TypeScript + Vite。環境変数、APIキー、Supabase、データベースは不要です。
+- PLO5ボムポット、4枚PLO、ノンリミット・テキサスホールデムを実装済み。CPUの固定の個性、通常ベット100単位、ロイヤルの役名表示、プリフロップありの2モードのボード上部のDボタン表示に対応しています。
+- 引き継ぎ前の検証: 単体テスト133件・PC/スマホのブラウザテスト58件・ビルド成功。以後の変更時には下記チェックを再実行してください。
+
+## 初回の準備
+
+クラウド環境でこのGitHubリポジトリを開きます。まだチェックアウトがない場合だけ、作業用ディレクトリで次を実行します。
+
+```sh
+git clone https://github.com/komiki0401/PLO_game.git
+cd PLO_game
+```
+
+既にチェックアウトがある場合は、そのディレクトリで `git status --short` を確認します。作業中の変更があればそのまま保持し、上書きや `reset --hard` をしないでください。変更がない場合は `main` に移動して取得します。
+
+```sh
+git switch main
+git pull --ff-only origin main
+```
+
+環境のランタイムをNode.js 24に設定します。nvmがある環境なら次を使えます。nvmがない場合は環境のNode.js設定機能を使ってください。
+
+```sh
+nvm install
+nvm use
+node --version
+npm --version
+npm ci
+```
+
+`npm ci` は既存のロックファイルに合わせて依存関係を導入します。`node_modules` やWindows側の生成物をクラウドにコピーする必要はありません。音声・画像は同梱済みのため、通常の開発にはPythonや音声生成モデルは不要です。
+
+## 検証と起動
+
+```sh
+npm test
+npm run build
+npx playwright install --with-deps chromium
+npm run test:e2e
+```
+
+ChromiumとLinuxの依存関係のインストールには、環境によって管理者権限や環境側のセットアップ機能が必要です。
+
+```sh
+npm run dev -- --host 0.0.0.0 --port 5173 --strictPort
+```
+
+クラウド環境のポート5173のプレビュー/転送機能から開きます。開発プレビューはプライベートに設定してください。手元のブラウザの `localhost` はクラウドではなく手元のPCを指すため、環境が表示するプレビューURLを使います。開発サーバーは環境を再作成・再起動した際に起動し直してください。
+
+## データと秘密情報を維持する
+
+- 設定・統計・スコアは各ブラウザの `localStorage` に保存しています。保存キーは `plo-settings`、`plo-stats`、`plo-scores-v1`。変更・削除・初期化しないでください。
+- 公開URLとクラウドのプレビューURL、別端末・別ブラウザの保存領域は別です。記録は自動同期されません。公開URLの既存記録をGitへ追加したり、開発環境へ移動したりする必要はありません。
+- `.env` / `.env.*`、`node_modules`、`dist`、`test-results`、`playwright-report` はGitの除外対象です。`.env.example` だけ例外ですが、公開する際はダミー値だけにしてください。
+- ローカルの認証情報、秘密鍵、トークン、実データのエクスポートをリポジトリに追加しないでください。新しいサービスの導入が不要なら環境変数は作らないでください。
+
+## 変更を反映する
+
+新しい開発ブランチは `codex/` 接頭辞を使えます。既存ブランチで作業する場合は、その未反映の変更を保持してください。コミット前には `git status --short` と `git diff --check`、差分の内容を確認し、変更したファイルだけを追加します。
+
+`main` へのpushで `.github/workflows/pages.yml` が依存関係の監査・単体テスト・ビルド・ブラウザテストを実行し、すべて成功した場合だけGitHub Pagesへ公開します。PRは検証のみです。ローカルで成功してもGitHub Actionsで失敗した場合は公開完了とせず、原因を確認してください。公開後は上記公開URLでスマホ表示と操作を確認します。
