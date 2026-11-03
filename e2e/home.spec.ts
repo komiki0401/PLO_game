@@ -192,7 +192,7 @@ test("homepage layout and score history fit a narrow screen", async ({
   });
   await page.goto("/");
   await expect(
-    page.getByRole("img", { name: "DOUBLE BOARD PLO5", exact: true }),
+    page.getByRole("img", { name: "POKER", exact: true }),
   ).toBeVisible();
   expect(
     await page.evaluate(

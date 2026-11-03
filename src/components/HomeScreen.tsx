@@ -56,21 +56,17 @@ export function HomeScreen({
           <span className="eyebrow">
             {holdem ? "2 CARDS · NO LIMIT · 1 BOARD" : `${fourCard ? "4 CARDS · PREFLOP" : "5 CARDS · BOMB POT"} · 2 BOARDS`}
           </span>
-          {blinds ? (
-            <div className="home-mode-logo" aria-label={holdem ? "NO LIMIT HOLD’EM" : "DOUBLE BOARD PLO4"}>
-              {holdem ? "TEXAS" : "DOUBLE BOARD"} <strong>{holdem ? "HOLD’EM" : "PLO4"}</strong>
-              <small>{holdem ? "TWO CARDS · NO LIMIT" : "FOUR CARDS · FROM THE FIRST BET"}</small>
-            </div>
-          ) : (
-            <img
-              className="home-logo"
-              src={`${import.meta.env.BASE_URL}branding/double-board-plo5-logo.webp`}
-              alt="DOUBLE BOARD PLO5"
-              width="1983"
-              height="793"
-              fetchPriority="high"
-            />
-          )}
+          <img
+            className="home-logo"
+            src={`${import.meta.env.BASE_URL}branding/poker-logo.png`}
+            alt="POKER"
+            width="2172"
+            height="724"
+            fetchPriority="high"
+          />
+          <p className="eyebrow">
+            {holdem ? "TEXAS HOLD’EM · NO LIMIT" : fourCard ? "DOUBLE BOARD PLO4" : "DOUBLE BOARD PLO5"}
+          </p>
           <h1>
             {holdem ? "たった2枚から、" : "ふたつのボードに、"}
             <br />
