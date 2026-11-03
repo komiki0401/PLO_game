@@ -192,8 +192,14 @@ test("homepage layout and score history fit a narrow screen", async ({
   });
   await page.goto("/");
   await expect(
-    page.getByRole("img", { name: "DOUBLE BOARD PLO5", exact: true }),
+    page.getByRole("heading", { name: "ポーカー", exact: true, level: 1 }),
   ).toBeVisible();
+  await expect(page).toHaveTitle("ポーカー");
+  await expect(page.getByRole("group", { name: "手札2枚", exact: true })).toContainText("ホールデム・ノンリミット");
+  const omaha = page.getByRole("group", { name: "オマハ", exact: true });
+  await expect(omaha.getByRole("button")).toHaveCount(2);
+  await expect(omaha.getByRole("button").first()).toContainText("PLO4・プリフロップ");
+  await expect(omaha.getByRole("button").last()).toContainText("PLO5・Wボードボムポット");
   expect(
     await page.evaluate(
       () => document.documentElement.scrollWidth <= innerWidth,

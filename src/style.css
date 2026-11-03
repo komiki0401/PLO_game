@@ -2086,6 +2086,18 @@ header {
   gap: 10px;
   margin: 18px 0 12px;
 }
+.home-hero h1.home-poker-title {
+  font-size: clamp(46px, 6vw, 76px);
+  font-weight: 600;
+  color: #ead49d;
+  letter-spacing: 0.12em;
+  margin: 20px 0;
+}
+.game-family { display: grid; gap: 10px; }
+.home-setup .game-family-label { margin: 0; font-size: 11px; color: #adc5b6; }
+.omaha-family { margin-top: 12px; padding-top: 20px; border-top: 1px solid #c8ad7255; }
+.omaha-family h3 { margin: 0 0 3px; color: #ead49d; font-size: 18px; }
+.game-family button { width: 100%; }
 .game-picker button {
   display: grid;
   gap: 6px;

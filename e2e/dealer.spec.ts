@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-for (const mode of ["PLO4 · プリフロップ", "ホールデム · ノンリミット"]) {
+for (const mode of ["PLO4・プリフロップ", "ホールデム・ノンリミット"]) {
   test(`${mode}: dealer button is above the board, follows the hand and matches replay`, async ({ page }, info) => {
     test.setTimeout(90000);
     page.on("pageerror", e => { throw e; });

@@ -10,7 +10,7 @@ test("choose PLO4, play two hands, keep scores and return to the original PLO5",
     Math.random = () => { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed / 4294967296; };
   });
   await page.goto("/");
-  await page.getByRole("button", { name: "PLO4 · プリフロップ" }).click();
+  await page.getByRole("button", { name: "PLO4・プリフロップ" }).click();
   await expect(page.getByLabel("ビッグブラインド")).toHaveValue("100");
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.screenshot({ path: `test-results/plo4-home-${test.info().project.name}.png`, fullPage: true });
@@ -41,8 +41,8 @@ test("choose PLO4, play two hands, keep scores and return to the original PLO5",
   expect(records[0]).toMatchObject({ mode: "plo4", hands: 2 });
   await page.reload();
   await expect(page.locator(".score-history tbody")).toContainText("PLO4");
-  await expect(page.getByRole("button", { name: "PLO4 · プリフロップ" })).toHaveAttribute("aria-pressed", "true");
-  await page.getByRole("button", { name: "PLO5 · ボムポット" }).click();
+  await expect(page.getByRole("button", { name: "PLO4・プリフロップ" })).toHaveAttribute("aria-pressed", "true");
+  await page.getByRole("button", { name: "PLO5・Wボードボムポット" }).click();
   await page.getByRole("button", { name: "ゲームを始める", exact: true }).click();
   await expect(page.locator(".seat.human .hole-cards .card")).toHaveCount(5);
   await expect(page.locator(".board-cards .card:not(.empty)")).toHaveCount(6);
