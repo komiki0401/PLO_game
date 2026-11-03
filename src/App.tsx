@@ -621,22 +621,11 @@ export default function App() {
                     <strong>
                       <span className="chip-icon">◉</span> {fmt(pot)}
                     </strong>
-                    <div className="board-position">
                     <span className="street">
                       {view.done
                         ? "HAND COMPLETE"
                         : view.street === -1 ? "PREFLOP" : ["FLOP", "TURN", "RIVER"][view.street]}
                     </span>
-                    {(holdem || view.settings.mode === "plo4") && (
-                      <span className="dealer-position" role="img"
-                        data-dealer={view.dealer}
-                        aria-label={`ディーラーボタン：${view.players[view.dealer].name}`}
-                        title={`ボタン位置：${view.players[view.dealer].name}`}>
-                        <span className="dealer-disc" aria-hidden="true">D</span>
-                        <span className="dealer-owner" aria-hidden="true">{view.players[view.dealer].name}</span>
-                      </span>
-                    )}
-                    </div>
                   </div>
                   {view.boards.map((board, b) => (
                     <div
@@ -694,7 +683,7 @@ export default function App() {
                   <div
                     key={p.id}
                     data-player-id={p.id}
-                    className={`seat seat-${positions[view.players.length][i]} ${view.actor === i ? "active" : ""} ${p.folded ? "folded" : ""} ${i === 0 ? "human" : ""} ${winning ? "winner" : ""} ${!view.done && !p.folded && p.stack === 0 && p.hole.length ? "is-all-in" : ""} ${fmt(visibleStack).length > 7 ? "long-stack" : ""}`}
+                    className={`seat seat-${positions[view.players.length][i]} ${view.dealer === i ? "has-dealer" : ""} ${view.actor === i ? "active" : ""} ${p.folded ? "folded" : ""} ${i === 0 ? "human" : ""} ${winning ? "winner" : ""} ${!view.done && !p.folded && p.stack === 0 && p.hole.length ? "is-all-in" : ""} ${fmt(visibleStack).length > 7 ? "long-stack" : ""}`}
                   >
                     {i === 0 && humanTurn && (
                       <span className="your-turn-flag" role="status">
@@ -735,14 +724,10 @@ export default function App() {
                           {fmt(visibleStack)} <span>CHIPS</span>
                         </strong>
                       </div>
-                      {view.dealer === i && (
-                        <span className="dealer" title="ディーラー">
-                          D
-                        </span>
-                      )}
                     </div>
                     <ChipStacks amount={visibleStack} owner={p.name} />
                     <div className="hole-cards">
+                      <div className="hole-card-fan">
                       {p.hole.length ? (
                         p.hole.map((c, n) => (
                           <PlayingCard
@@ -761,6 +746,11 @@ export default function App() {
                       ) : (
                         <span className="out">SITTING OUT</span>
                       )}
+                      {view.dealer === i && (
+                        <span className="dealer dealer-disc" role="img" data-dealer={view.dealer}
+                          aria-label={`ディーラーボタン：${p.name}`} title={`ボタン位置：${p.name}`}>D</span>
+                      )}
+                      </div>
                     </div>
                     <div className="seat-status">
                       {!view.done &&
