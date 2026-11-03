@@ -31,7 +31,7 @@ export function estimate(
     }
     if (wonBoth) scoops++;
   }
-  return { equity: result / (trials * 2), scoop: scoops / trials };
+  return { equity: result / (trials * boards.length), scoop: scoops / trials };
 }
 export function equity(
   hole: Card[],
@@ -55,15 +55,20 @@ export function nuts(hole: Card[], boards: Card[][]): number {
     const own = evaluate(hole, board).score,
       triples = combinations(board, 3);
     let beaten = false;
-    outer: for (const pair of pairs)
+    outer: for (const pair of pairs) {
+      if (hole.length === 2) {
+        if (evaluate(pair, board).score > own) { beaten = true; break; }
+        continue;
+      }
       for (const triple of triples)
         if (five([...pair, ...triple]).score > own) {
           beaten = true;
           break outer;
         }
+    }
     if (!beaten) count++;
   }
-  return count / 2;
+  return count / boards.length;
 }
 export function cpu(s: State, rng = Math.random): Action {
   const p = s.players[s.actor],

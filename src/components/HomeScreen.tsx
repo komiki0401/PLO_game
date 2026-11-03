@@ -37,6 +37,8 @@ export function HomeScreen({
 }) {
   const [draft, setDraft] = useState(settings);
   const fourCard = draft.mode === "plo4";
+  const holdem = draft.mode === "holdem";
+  const blinds = fourCard || holdem;
   const best = Math.max(0, ...records.map((r) => r.peakStack)),
     profit = Math.max(0, ...records.map((r) => r.net));
   return (
@@ -52,12 +54,12 @@ export function HomeScreen({
       <section className="home-intro">
         <div className="home-hero">
           <span className="eyebrow">
-            {fourCard ? "4 CARDS · PREFLOP" : "5 CARDS · BOMB POT"} · 2 BOARDS
+            {holdem ? "2 CARDS · NO LIMIT · 1 BOARD" : `${fourCard ? "4 CARDS · PREFLOP" : "5 CARDS · BOMB POT"} · 2 BOARDS`}
           </span>
-          {fourCard ? (
-            <div className="home-mode-logo" aria-label="DOUBLE BOARD PLO4">
-              DOUBLE BOARD <strong>PLO4</strong>
-              <small>FOUR CARDS · FROM THE FIRST BET</small>
+          {blinds ? (
+            <div className="home-mode-logo" aria-label={holdem ? "NO LIMIT HOLD’EM" : "DOUBLE BOARD PLO4"}>
+              {holdem ? "TEXAS" : "DOUBLE BOARD"} <strong>{holdem ? "HOLD’EM" : "PLO4"}</strong>
+              <small>{holdem ? "TWO CARDS · NO LIMIT" : "FOUR CARDS · FROM THE FIRST BET"}</small>
             </div>
           ) : (
             <img
@@ -70,14 +72,14 @@ export function HomeScreen({
             />
           )}
           <h1>
-            ふたつのボードに、
+            {holdem ? "たった2枚から、" : "ふたつのボードに、"}
             <br />
             <em>ひとつの勝負を。</em>
           </h1>
           <p>
-            {fourCard ? "4枚の手札で、プリフロップから。" : "5枚の手札と、2つのボード。"}
+            {holdem ? "手札2枚と共通の5枚から、最強の5枚を。" : fourCard ? "4枚の手札で、プリフロップから。" : "5枚の手札と、2つのボード。"}
             <br />
-            {fourCard ? "ブラインドから始まるCPU戦を、プレイチップで。" : "CPUとのボムポットを、プレイチップで何度でも。"}
+            {blinds ? "ブラインドから始まるCPU戦を、プレイチップで。" : "CPUとのボムポットを、プレイチップで何度でも。"}
           </p>
           <div className="home-quick-start">
             <button
@@ -89,14 +91,14 @@ export function HomeScreen({
               今すぐプレイ <span>→</span>
             </button>
             <small>
-              {fourCard ? "PLO4" : "PLO5"} · {draft.count}人卓 · 初期 {fmt(draft.stack)} · {fourCard ? "BB" : "アンティ"}{" "}
+              {holdem ? "NLH" : fourCard ? "PLO4" : "PLO5"} · {draft.count}人卓 · 初期 {fmt(draft.stack)} · {blinds ? "BB" : "アンティ"}{" "}
               {fmt(draft.ante)}
             </small>
             <a href="#home-table-settings">ゲーム・設定を選ぶ ↓</a>
           </div>
           <div className="home-rules">
-            <span>♠ ホール2枚 ＋ ボード3枚</span>
-            <span>◉ ポットリミット</span>
+            <span>{holdem ? "♠ 7枚から自由に最強の5枚" : "♠ ホール2枚 ＋ ボード3枚"}</span>
+            <span>{holdem ? "◉ ノンリミット" : "◉ ポットリミット"}</span>
             <span>✦ 最大6人卓</span>
           </div>
         </div>
@@ -105,7 +107,7 @@ export function HomeScreen({
           <h2>ゲームを選ぶ</h2>
           <p>設定を選んでゲームを始めましょう。</p>
           <div className="game-picker" role="group" aria-label="ゲームを選ぶ">
-            <button type="button" aria-pressed={!fourCard} onClick={() => setDraft({ ...draft, mode: "plo5" })}>
+            <button type="button" aria-pressed={!blinds} onClick={() => setDraft({ ...draft, mode: "plo5" })}>
               <strong>PLO5 · ボムポット</strong>
               <span>手札5枚 · フロップから · 全員アンティ</span>
             </button>
@@ -113,8 +115,12 @@ export function HomeScreen({
               <strong>PLO4 · プリフロップ</strong>
               <span>手札4枚 · SB / BB · プリフロップから</span>
             </button>
+            <button type="button" aria-pressed={holdem} onClick={() => setDraft({ ...draft, mode: "holdem" })}>
+              <strong>ホールデム · ノンリミット</strong>
+              <span>手札2枚 · ボード1組 · SB / BB</span>
+            </button>
           </div>
-          <p className="mode-note">どちらもダブルボード・ポットリミット。{fourCard ? `SB ${fmt(Math.max(1, Math.floor(draft.ante / 2)))} / BB ${fmt(draft.ante)}、アンティなし。` : "既存の5枚ルールで遊べます。"}</p>
+          <p className="mode-note">{holdem ? "標準のテキサスホールデム。スタック全額までレイズ可能。" : "PLOはダブルボード・ポットリミット。"}{blinds ? `SB ${fmt(Math.max(1, Math.floor(draft.ante / 2)))} / BB ${fmt(draft.ante)}、アンティなし。` : "既存の5枚ルールで遊べます。"}</p>
           <form
             id="home-table-form"
             onSubmit={(e) => {
@@ -169,7 +175,7 @@ export function HomeScreen({
                 />
               </label>
               <label>
-                {fourCard ? "ビッグブラインド" : "ボムポットアンティ"}
+                {blinds ? "ビッグブラインド" : "ボムポットアンティ"}
                 <input
                   type="number"
                   required
@@ -345,7 +351,7 @@ export function HomeScreen({
                         {date(r.updatedAt)} · {labels[r.status]}
                       </b>
                       <small>
-                        {r.mode === "plo4" ? "PLO4" : "PLO5"} / {r.players}人 / {r.difficulty} / 初期{" "}
+                        {r.mode === "holdem" ? "NLH" : r.mode === "plo4" ? "PLO4" : "PLO5"} / {r.players}人 / {r.difficulty} / 初期{" "}
                         {fmt(r.initialStack)}
                       </small>
                     </td>
@@ -370,7 +376,7 @@ export function HomeScreen({
         </p>
       </section>
       <footer>
-        <span>♠ DOUBLE BOARD PLO CLUB</span>
+        <span>♠ {holdem ? "TEXAS HOLD’EM" : "DOUBLE BOARD PLO CLUB"}</span>
         <span>プレイチップ専用 · 換金・入出金・賞金なし</span>
       </footer>
     </main>

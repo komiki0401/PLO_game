@@ -255,6 +255,7 @@ export default function App() {
     }
     setHistory((h) => [game, ...h].slice(0, 30));
     const scoop =
+      game.boards.length === 2 &&
       game.awards.length > 0 &&
       game.awards.every((a) => a.winners.length === 1 && a.winners[0] === 0);
     setStats((s: { hands: number; scoops: number; net: number }) => {
@@ -305,6 +306,8 @@ export default function App() {
     if (game.done && !game.awards.length) tableAudio.current?.cue("win");
   }, [game, screen]);
   const view = replay ?? game,
+    holdem = view.settings.mode === "holdem",
+    gameLabel = holdem ? "NO LIMIT HOLD’EM" : `DOUBLE BOARD ${view.settings.mode === "plo4" ? "PLO4" : "PLO5"}`,
     pot = view.players.reduce((n, p) => n + p.total, 0),
     humanTurn = screen === "table" && !replay && !game.done && game.actor === 0;
   const l = legal(game, 0),
@@ -312,6 +315,7 @@ export default function App() {
     raiseAmount = sizing.normalize(amount);
   const sole = view.awards[0]?.winners[0],
     scoop =
+      view.boards.length === 2 &&
       view.awards.length > 0 &&
       view.awards.every((a) => a.winners.length === 1 && a.winners[0] === sole);
   const steps = useMemo(
@@ -517,6 +521,7 @@ export default function App() {
           className={
             [
               "table-screen",
+              holdem ? "holdem" : "",
               view.done && activeStep ? "showdown" : "",
               humanTurn ? "human-turn" : "",
             ]
@@ -538,9 +543,9 @@ export default function App() {
                   e.preventDefault();
                   returnHome();
                 }}
-                aria-label={`DOUBLE BOARD ${view.settings.mode === "plo4" ? "PLO4" : "PLO5"} ホーム`}
+                aria-label={`${gameLabel} ホーム`}
               >
-                {view.settings.mode === "plo4" ? <span className="plo4-brand">DOUBLE BOARD <b>PLO4</b></span> : <img
+                {holdem || view.settings.mode === "plo4" ? <span className="plo4-brand">{holdem ? "NO LIMIT" : "DOUBLE BOARD"} <b>{holdem ? "HOLD’EM" : "PLO4"}</b></span> : <img
                   className="brand-logo"
                   src={`${import.meta.env.BASE_URL}branding/double-board-plo5-logo.webp`}
                   alt="DOUBLE BOARD PLO5"
@@ -585,7 +590,7 @@ export default function App() {
                 <div>
                   <span className="eyebrow">YOUR PRIVATE TABLE</span>
                   <h1>
-                    Two boards. <em>Twice the possibility.</em>
+                    {holdem ? <>Two cards. <em>Unlimited possibilities.</em></> : <>Two boards. <em>Twice the possibility.</em></>}
                   </h1>
                 </div>
                 <div className="session-info">
@@ -593,7 +598,7 @@ export default function App() {
                     HAND <b>#{view.hand.toString().padStart(3, "0")}</b>
                   </span>
                   <span>
-                    {view.settings.mode === "plo4" ? "BB" : "ANTE"} <b>{fmt(view.settings.ante)}</b>
+                    {holdem || view.settings.mode === "plo4" ? "BB" : "ANTE"} <b>{fmt(view.settings.ante)}</b>
                   </span>
                   <span>
                     CPU <b>{view.settings.difficulty}</b>
@@ -605,10 +610,10 @@ export default function App() {
               <div className="table">
                 <div className="rail-line" />
                 <div className="felt-label">
-                  DOUBLE BOARD <span>♠</span> {view.settings.mode === "plo4" ? "PLO4" : "PLO5"}
+                  {holdem ? "TEXAS HOLD’EM" : <>DOUBLE BOARD <span>♠</span> {view.settings.mode === "plo4" ? "PLO4" : "PLO5"}</>}
                 </div>
                 <div className="table-meta">
-                  {view.settings.mode === "plo4" ? "SB / BB" : "BOMB POT"} · POT LIMIT · {view.players.length} PLAYERS
+                  {holdem || view.settings.mode === "plo4" ? "SB / BB" : "BOMB POT"} · {holdem ? "NO LIMIT" : "POT LIMIT"} · {view.players.length} PLAYERS
                 </div>
                 <div className="center-game">
                   <div className="pot">
@@ -642,10 +647,10 @@ export default function App() {
                         aria-pressed={activeBoard === b}
                       >
                         <span>BOARD</span>
-                        <b>{"AB"[b]}</b>
+                        <b>{holdem ? "♠" : "AB"[b]}</b>
                         <small>
                           {fmt(
-                            b === 0 ? Math.ceil(pot / 2) : Math.floor(pot / 2),
+                            holdem ? pot : b === 0 ? Math.ceil(pot / 2) : Math.floor(pot / 2),
                           )}
                         </small>
                       </button>
@@ -778,7 +783,7 @@ export default function App() {
                 aria-live="polite"
                 data-board={activeBoard}
               >
-                <span className="verdict-board">BOARD {"AB"[activeBoard]}</span>
+                <span className="verdict-board">{holdem ? "WINNER" : `BOARD ${"AB"[activeBoard]}`}</span>
                 <div>
                   <small>
                     {activeStep.award.pot === 0
@@ -794,7 +799,7 @@ export default function App() {
                     <span>— {handName(activeStep.hand)}</span>
                   </strong>
                 </div>
-                <span className="verdict-note">ホール2枚 ＋ ボード3枚</span>
+                <span className="verdict-note">{holdem ? "7枚から最強の5枚" : "ホール2枚 ＋ ボード3枚"}</span>
               </section>
             )}
             <section className="action-panel" aria-live="polite">
@@ -833,7 +838,7 @@ export default function App() {
                 <div className="end-actions">
                   <div>
                     <span className="eyebrow">
-                      SHOWDOWN · BOARD {"AB"[activeBoard]}
+                      SHOWDOWN{!holdem && ` · BOARD ${"AB"[activeBoard]}`}
                     </span>
                     <h2>
                       {handName(activeStep.hand)}
@@ -914,8 +919,8 @@ export default function App() {
                     </strong>
                     <small>
                       {humanTurn
-                        ? "ホールカード2枚 ＋ ボード3枚で役を作ります"
-                        : "2つのボード、それぞれの勝負。"}
+                        ? holdem ? "手札2枚と共通カード5枚から最強の5枚を選びます" : "ホールカード2枚 ＋ ボード3枚で役を作ります"
+                        : holdem ? "ひとつのボードで勝負。" : "2つのボード、それぞれの勝負。"}
                     </small>
                   </div>
                   {humanTurn && (
@@ -1066,7 +1071,7 @@ export default function App() {
                       {step.award.pot === 0
                         ? "MAIN POT"
                         : `SIDE POT ${step.award.pot}`}{" "}
-                      · BOARD {"AB"[step.award.board]} ·{" "}
+                      {holdem ? " · " : ` · BOARD ${"AB"[step.award.board]} · `}{" "}
                       {fmt(step.award.amount)}
                     </small>
                     <b>{view.players[step.winner].name}</b>
@@ -1143,9 +1148,9 @@ export default function App() {
             </aside>
           </div>
           <footer>
-            <span>♠ DOUBLE BOARD {view.settings.mode === "plo4" ? "PLO4" : "PLO5"}</span>
+            <span>♠ {gameLabel}</span>
             <span>プレイチップ専用 · 換金・入出金・賞金なし</span>
-            <span>EXACTLY TWO. ALWAYS.</span>
+            <span>{holdem ? "BEST FIVE OF SEVEN." : "EXACTLY TWO. ALWAYS."}</span>
           </footer>
           {config && (
             <div className="modal-backdrop">
@@ -1196,7 +1201,7 @@ export default function App() {
                     />
                   </label>
                   <label>
-                    {draft.mode === "plo4" ? "ビッグブラインド" : "ボムポットアンティ"}
+                    {draft.mode === "holdem" || draft.mode === "plo4" ? "ビッグブラインド" : "ボムポットアンティ"}
                     <input
                       type="number"
                       min="1"
@@ -1298,6 +1303,17 @@ export default function App() {
                   ×
                 </button>
                 <span className="eyebrow">A DIFFERENT KIND OF POKER</span>
+                {holdem ? <>
+                  <h2 id="rules-title">ノンリミット・テキサスホールデム</h2>
+                  <p>手札2枚、共通ボード1組。プリフロップ、フロップ3枚、ターン1枚、リバー1枚の順に進みます。アンティはなく、SB（BBの半分を切り捨て、最低1）とBBを支払います。各ストリートの公開前に1枚バーンします。</p>
+                  <h3>7枚から、最強の5枚。</h3>
+                  <p>手札は0枚・1枚・2枚のどれでも使えます。ボードの5枚だけで役を作ることもできます。チョップ時はキッカーを含む最強5枚を比較します。</p>
+                  <h3>ノンリミット</h3>
+                  <p>ポット額にかかわらず残りスタック全額までベット・レイズできます。最低ベットはBB、最低レイズ幅は直前のフルベット／レイズ幅。ショートオールインはフルレイズ幅を更新せず、増額が累積してフルレイズ幅に達するとレイズ権が再開します。</p>
+                  <p>通常の合計ベット額は100単位。コール・ブラインド・全額オールインの端数は維持します。プリフロップはBBの左から、それ以降はボタンの左から行動します。2人卓ではボタンがSBで、プリフロップは先、それ以降は後に行動します。</p>
+                  <h3>ポットの分配</h3>
+                  <p>各メイン・サイドポットは対象の勝者へ全額分配。ボード間の分割はありません。同点時の端数はボタンの左から時計回りに配り、未コール分は返却します。フォールドした席は獲得できません。</p>
+                </> : <>
                 <h2 id="rules-title">{game.settings.mode === "plo4" ? "4 cards. Preflop. 2 boards." : "5 cards. 2 boards. 1 pot."}</h2>
                 <p>
                   {game.settings.mode === "plo4" ? "ホールカード4枚、ボード未公開のプリフロップからスタート。アンティはなく、SB（BBの半分を切り捨て、最低1）とBBを支払います。プリフロップはBBの左から、フロップ以降はボタンの左からアクション。2人卓ではボタンがSBでプリフロップは先に、フロップ以降は後に行動します。" : "全員がアンティを払い、5枚のホールカードと2つのフロップからスタート。プリフロップのベットはありません。"}
@@ -1318,6 +1334,7 @@ export default function App() {
                 <p>
                   CPUは公開情報からの簡易シミュレーションを使用します。GTOソルバーではありません。CPUの破産した席は休止します。自分のスタックが0になった場合は、結果表示後にスコアを記録してトップ画面へ戻ります。
                 </p>
+                </>}
                 <CpuRoster count={game.players.length} />
                 <button className="primary" onClick={() => setRules(false)}>
                   テーブルに戻る

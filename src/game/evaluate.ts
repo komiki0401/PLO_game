@@ -74,6 +74,7 @@ export function five(cards: Card[]): { score: number; category: number } {
   };
 }
 export function evaluate(hole: Card[], board: Card[]): Hand {
+  if (hole.length === 2) return evaluateHoldem(hole, board);
   if (![4, 5].includes(hole.length) || board.length < 3 || board.length > 5)
     throw new Error("Invalid Omaha hand");
   let best: Hand | undefined;
@@ -84,5 +85,19 @@ export function evaluate(hole: Card[], board: Card[]): Hand {
       if (!best || result.score > best.score)
         best = { ...result, cards, hole: h, board: b };
     }
+  return best!;
+}
+export function evaluateHoldem(hole: Card[], board: Card[]): Hand {
+  if (hole.length !== 2 || board.length < 3 || board.length > 5)
+    throw new Error("Invalid Hold’em hand");
+  let best: Hand | undefined;
+  for (const cards of combinations([...hole, ...board], 5)) {
+    const result = five(cards);
+    if (!best || result.score > best.score) best = {
+      ...result, cards,
+      hole: cards.filter(card => hole.includes(card)),
+      board: cards.filter(card => board.includes(card)),
+    };
+  }
   return best!;
 }

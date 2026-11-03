@@ -9,7 +9,7 @@ import {
 } from "./betting";
 import { distribute, type Award } from "./pots";
 export type Settings = {
-  mode?: "plo5" | "plo4";
+  mode?: "plo5" | "plo4" | "holdem";
   count: number;
   stack: number;
   ante: number;
@@ -54,13 +54,15 @@ export type State = {
   settings: Settings;
   initialTotal: number;
   blinds?: { small: number; big: number };
+  noLimit?: boolean;
+  burns?: Card[];
 };
 export function create(
   settings: Settings = defaults,
   rng = Math.random,
 ): State {
   if (
-    (settings.mode !== undefined && settings.mode !== "plo5" && settings.mode !== "plo4") ||
+    (settings.mode !== undefined && !["plo5", "plo4", "holdem"].includes(settings.mode)) ||
     !Number.isInteger(settings.count) ||
     settings.count < 2 ||
     settings.count > 6 ||
@@ -100,6 +102,7 @@ export function create(
       payouts: {},
       log: [],
       settings,
+      noLimit: settings.mode === "holdem",
       initialTotal: settings.stack * settings.count,
     },
     rng,
@@ -112,16 +115,18 @@ export function nextHand(previous: State, rng = Math.random): State {
   if (active.length < 2) throw new Error("Session finished");
   s.hand++;
   s.done = false;
-  const preflop = s.settings.mode === "plo4";
+  const holdem = s.settings.mode === "holdem";
+  const preflop = s.settings.mode === "plo4" || holdem;
   s.street = preflop ? -1 : 0;
   s.high = 0;
   s.lastRaise = s.minBet;
   s.awards = [];
   s.payouts = {};
-  s.log = [`HAND #${s.hand} · ${preflop ? "PLO4 · PREFLOP" : "BOMB POT"}`];
+  s.log = [`HAND #${s.hand} · ${holdem ? "NO LIMIT HOLD’EM · PREFLOP" : preflop ? "PLO4 · PREFLOP" : "BOMB POT"}`];
   s.blinds = undefined;
   s.deck = deck(rng);
-  s.boards = [[], []];
+  s.boards = holdem ? [[]] : [[], []];
+  if (holdem) s.burns = [];
   do {
     s.dealer = (s.dealer + 1) % s.players.length;
   } while (s.players[s.dealer].stack === 0);
@@ -137,7 +142,7 @@ export function nextHand(previous: State, rng = Math.random): State {
       p.bet = 0;
     }
   });
-  for (let n = 0; n < (preflop ? 4 : 5); n++)
+  for (let n = 0; n < (holdem ? 2 : preflop ? 4 : 5); n++)
     for (let offset = 1; offset <= s.players.length; offset++) {
       const p = s.players[(s.dealer + offset) % s.players.length];
       if (!p.folded) p.hole.push(s.deck.pop()!);
@@ -170,6 +175,11 @@ export function nextHand(previous: State, rng = Math.random): State {
   }
   advance(s);
   return s;
+}
+function dealCommunity(s: State, count: number) {
+  if (s.settings.mode === "holdem") (s.burns ??= []).push(s.deck.pop()!);
+  for (const board of s.boards)
+    for (let n = 0; n < count; n++) board.push(s.deck.pop()!);
 }
 function refund(s: State) {
   const sorted = [...s.players].sort((a, b) => b.total - a.total);
@@ -216,8 +226,10 @@ function advance(s: State) {
     if (able.length === 1) s.high = outstanding;
     // No dry side-pot betting: a sole player only acts to match an outstanding wager.
     if (able.length <= 1 && (!able.length || able[0].bet >= outstanding)) {
-      while (s.boards[0].length < 5)
-        for (const b of s.boards) b.push(s.deck.pop()!);
+      while (s.boards[0].length < 5) {
+        if (s.settings.mode === "holdem") dealCommunity(s, s.boards[0].length === 0 ? 3 : 1);
+        else for (const b of s.boards) b.push(s.deck.pop()!);
+      }
       s.street = 2;
       finish(s);
       return;
@@ -235,8 +247,7 @@ function advance(s: State) {
       return;
     }
     s.street++;
-    for (const b of s.boards)
-      for (let n = 0; n < (s.street === 0 ? 3 : 1); n++) b.push(s.deck.pop()!);
+    dealCommunity(s, s.street === 0 ? 3 : 1);
     s.high = 0;
     s.lastRaise = s.minBet;
     s.players.forEach((p) => {

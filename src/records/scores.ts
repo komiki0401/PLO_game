@@ -48,6 +48,7 @@ export function recordCompletedHand(
   if (previous.hands >= game.hand) return previous;
   const stack = game.players[0].stack;
   const scoop =
+    game.boards.length === 2 &&
     game.awards.length > 0 &&
     game.awards.every((a) => a.winners.length === 1 && a.winners[0] === 0);
   return {
@@ -76,7 +77,7 @@ function valid(record: unknown): record is ScoreRecord {
   const r = record as ScoreRecord;
   return (
     typeof r.id === "string" &&
-    (r.mode === undefined || r.mode === "plo5" || r.mode === "plo4") &&
+    (r.mode === undefined || r.mode === "plo5" || r.mode === "plo4" || r.mode === "holdem") &&
     r.id.length > 0 &&
     typeof r.startedAt === "string" &&
     typeof r.updatedAt === "string" &&

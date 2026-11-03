@@ -41,9 +41,9 @@ export function distribute(
   const awards: Award[] = [];
   makePots(players).forEach((pot, pi) => {
     if (!pot.eligible.length) throw new Error("Pot without eligible player");
-    for (let b = 0; b < 2; b++) {
+    for (let b = 0; b < boards.length; b++) {
       const amount =
-        b === 0 ? Math.ceil(pot.amount / 2) : Math.floor(pot.amount / 2);
+        boards.length === 1 ? pot.amount : b === 0 ? Math.ceil(pot.amount / 2) : Math.floor(pot.amount / 2);
       const hands: Record<number, Hand> = {};
       pot.eligible.forEach(
         (id) =>

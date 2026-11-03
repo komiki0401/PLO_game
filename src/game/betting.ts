@@ -6,6 +6,7 @@ export type Bettor = {
   actedAt: number | null;
 };
 export type Betting = {
+  noLimit?: boolean;
   players: Bettor[];
   high: number;
   lastRaise: number;
@@ -24,8 +25,8 @@ export function legal(s: Betting, id: number): Legal {
   const p = s.players[id],
     call = Math.max(0, s.high - p.bet);
   const pot = s.players.reduce((n, p) => n + p.total, 0);
-  const max = Math.min(p.bet + p.stack, s.high + pot + call);
-  const min = s.high + s.lastRaise;
+  const max = s.noLimit ? p.bet + p.stack : Math.min(p.bet + p.stack, s.high + pot + call);
+  const min = s.noLimit && s.high < s.minBet ? s.minBet : s.high + s.lastRaise;
   const rights = p.actedAt === null || s.high - p.actedAt >= s.lastRaise;
   const opponent = s.players.some(
     (o, i) => i !== id && !o.folded && o.stack > 0,
@@ -69,7 +70,8 @@ export function applyBet(s: Betting, id: number, a: Action): void {
       throw new Error("Illegal raise");
     const increment = a.to - s.high;
     pay(p, a.to - p.bet);
-    if (increment >= s.lastRaise) s.lastRaise = increment;
+    if (s.noLimit && s.high < s.minBet && a.to >= s.minBet) s.lastRaise = a.to;
+    else if (increment >= s.lastRaise) s.lastRaise = increment;
     s.high = a.to;
   }
   p.actedAt = s.high;
