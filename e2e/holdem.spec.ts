@@ -33,7 +33,7 @@ test("offers standard two-card single-board no-limit play and keeps both PLO gam
   await page.getByRole("button", { name: "ルール", exact: true }).click();
   await expect(page.getByRole("dialog")).toContainText("手札は0枚・1枚・2枚");
   await page.getByRole("button", { name: "テーブルに戻る", exact: true }).click();
-  for (const [mode, holes, boards] of [["PLO4・プリフロップ", 4, 2], ["PLO5・Wボードボムポット", 5, 2]] as const) {
+  for (const [mode, holes, boards] of [["PLO4・プリフロップ", 4, 1], ["PLO5・Wボードボムポット", 5, 2]] as const) {
     await page.getByRole("button", { name: "トップへ", exact: true }).click();
     await page.getByRole("button", { name: mode }).click();
     await page.getByRole("button", { name: "ゲームを始める", exact: true }).click();

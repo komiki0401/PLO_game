@@ -307,7 +307,8 @@ export default function App() {
   }, [game, screen]);
   const view = replay ?? game,
     holdem = view.settings.mode === "holdem",
-    gameLabel = holdem ? "NO LIMIT HOLD’EM" : `DOUBLE BOARD ${view.settings.mode === "plo4" ? "PLO4" : "PLO5"}`,
+    singleBoard = view.boards.length === 1,
+    gameLabel = holdem ? "NO LIMIT HOLD’EM" : `${singleBoard ? "SINGLE" : "DOUBLE"} BOARD ${view.settings.mode === "plo4" ? "PLO4" : "PLO5"}`,
     pot = view.players.reduce((n, p) => n + p.total, 0),
     humanTurn = screen === "table" && !replay && !game.done && game.actor === 0;
   const l = legal(game, 0),
@@ -548,7 +549,7 @@ export default function App() {
                 }}
                 aria-label={`${gameLabel} ホーム`}
               >
-                {holdem || view.settings.mode === "plo4" ? <span className="plo4-brand">{holdem ? "NO LIMIT" : "DOUBLE BOARD"} <b>{holdem ? "HOLD’EM" : "PLO4"}</b></span> : <img
+                {holdem || view.settings.mode === "plo4" ? <span className="plo4-brand">{holdem ? "NO LIMIT" : "SINGLE BOARD"} <b>{holdem ? "HOLD’EM" : "PLO4"}</b></span> : <img
                   className="brand-logo"
                   src={`${import.meta.env.BASE_URL}branding/double-board-plo5-logo.webp`}
                   alt="DOUBLE BOARD PLO5"
@@ -593,7 +594,7 @@ export default function App() {
                 <div>
                   <span className="eyebrow">YOUR PRIVATE TABLE</span>
                   <h1>
-                    {holdem ? <>Two cards. <em>Unlimited possibilities.</em></> : <>Two boards. <em>Twice the possibility.</em></>}
+                    {holdem ? <>Two cards. <em>Unlimited possibilities.</em></> : singleBoard ? <>Four cards. <em>One board.</em></> : <>Two boards. <em>Twice the possibility.</em></>}
                   </h1>
                 </div>
                 <div className="session-info">
@@ -613,7 +614,7 @@ export default function App() {
               <div className="table">
                 <div className="rail-line" />
                 <div className="felt-label">
-                  {holdem ? "TEXAS HOLD’EM" : <>DOUBLE BOARD <span>♠</span> {view.settings.mode === "plo4" ? "PLO4" : "PLO5"}</>}
+                  {holdem ? "TEXAS HOLD’EM" : <>{singleBoard ? "SINGLE" : "DOUBLE"} BOARD <span>♠</span> {view.settings.mode === "plo4" ? "PLO4" : "PLO5"}</>}
                 </div>
                 <div className="table-meta">
                   {holdem || view.settings.mode === "plo4" ? "SB / BB" : "BOMB POT"} · {holdem ? "NO LIMIT" : "POT LIMIT"} · {view.players.length} PLAYERS
@@ -650,10 +651,10 @@ export default function App() {
                         aria-pressed={activeBoard === b}
                       >
                         <span>BOARD</span>
-                        <b>{holdem ? "♠" : "AB"[b]}</b>
+                        <b>{singleBoard ? "♠" : "AB"[b]}</b>
                         <small>
                           {fmt(
-                            holdem ? pot : b === 0 ? Math.ceil(pot / 2) : Math.floor(pot / 2),
+                            singleBoard ? pot : b === 0 ? Math.ceil(pot / 2) : Math.floor(pot / 2),
                           )}
                         </small>
                       </button>
@@ -788,7 +789,7 @@ export default function App() {
                 aria-live="polite"
                 data-board={activeBoard}
               >
-                <span className="verdict-board">{holdem ? "WINNER" : `BOARD ${"AB"[activeBoard]}`}</span>
+                <span className="verdict-board">{singleBoard ? "WINNER" : `BOARD ${"AB"[activeBoard]}`}</span>
                 <div>
                   <small>
                     {activeStep.award.pot === 0
@@ -843,7 +844,7 @@ export default function App() {
                 <div className="end-actions">
                   <div>
                     <span className="eyebrow">
-                      SHOWDOWN{!holdem && ` · BOARD ${"AB"[activeBoard]}`}
+                      SHOWDOWN{!singleBoard && ` · BOARD ${"AB"[activeBoard]}`}
                     </span>
                     <h2>
                       {handName(activeStep.hand)}
@@ -925,7 +926,7 @@ export default function App() {
                     <small>
                       {humanTurn
                         ? holdem ? "手札2枚と共通カード5枚から最強の5枚を選びます" : "ホールカード2枚 ＋ ボード3枚で役を作ります"
-                        : holdem ? "ひとつのボードで勝負。" : "2つのボード、それぞれの勝負。"}
+                        : singleBoard ? "ひとつのボードで勝負。" : "2つのボード、それぞれの勝負。"}
                     </small>
                   </div>
                   {humanTurn && (
@@ -1086,7 +1087,7 @@ export default function App() {
                       {step.award.pot === 0
                         ? "MAIN POT"
                         : `SIDE POT ${step.award.pot}`}{" "}
-                      {holdem ? " · " : ` · BOARD ${"AB"[step.award.board]} · `}{" "}
+                      {singleBoard ? " · " : ` · BOARD ${"AB"[step.award.board]} · `}{" "}
                       {fmt(step.award.amount)}
                     </small>
                     <b>{view.players[step.winner].name}</b>
@@ -1329,13 +1330,13 @@ export default function App() {
                   <h3>ポットの分配</h3>
                   <p>各メイン・サイドポットは対象の勝者へ全額分配。ボード間の分割はありません。同点時の端数はボタンの左から時計回りに配り、未コール分は返却します。フォールドした席は獲得できません。</p>
                 </> : <>
-                <h2 id="rules-title">{game.settings.mode === "plo4" ? "4 cards. Preflop. 2 boards." : "5 cards. 2 boards. 1 pot."}</h2>
+                <h2 id="rules-title">{game.settings.mode === "plo4" ? "4 cards. Preflop. 1 board." : "5 cards. 2 boards. 1 pot."}</h2>
                 <p>
-                  {game.settings.mode === "plo4" ? "ホールカード4枚、ボード未公開のプリフロップからスタート。アンティはなく、SB（BBの半分を切り捨て、最低1）とBBを支払います。プリフロップはBBの左から、フロップ以降はボタンの左からアクション。2人卓ではボタンがSBでプリフロップは先に、フロップ以降は後に行動します。" : "全員がアンティを払い、5枚のホールカードと2つのフロップからスタート。プリフロップのベットはありません。"}
+                  {game.settings.mode === "plo4" ? "ホールカード4枚、シングルボード。ボード未公開のプリフロップからスタート。アンティはなく、SB（BBの半分を切り捨て、最低1）とBBを支払います。プリフロップはBBの左から、フロップ以降はボタンの左からアクション。2人卓ではボタンがSBでプリフロップは先に、フロップ以降は後に行動します。" : "全員がアンティを払い、5枚のホールカードと2つのフロップからスタート。プリフロップのベットはありません。"}
                 </p>
                 <h3>必ず、2枚 ＋ 3枚。</h3>
                 <p>
-                  各ボードでホールカードを必ず2枚、対象ボードから必ず3枚使います。A・Bは独立判定。ハイハンドのみです。
+                  各ボードでホールカードを必ず2枚、対象ボードから必ず3枚使います。{singleBoard ? "共通ボードは1組です。" : "A・Bは独立判定。"}ハイハンドのみです。
                 </p>
                 <h3>ポットリミット</h3>
                 <p>
@@ -1344,7 +1345,7 @@ export default function App() {
                 <p>通常のベット・レイズは合計額を100単位で指定します。ポット上限を超えない範囲に切り下げ、最低額は100単位に切り上げます。コール・ブラインド・全額オールインは端数に対応します。</p>
                 <h3>分配とオールイン</h3>
                 <p>
-                  各メイン・サイドポットを半分ずつ両ボードに分配。奇数の1チップはAへ。同点の余りはボタン左から時計回り。未コール分は返却し、フォールドした人は受け取れません。
+                  {singleBoard ? "各メイン・サイドポットは対象の勝者へ全額分配。" : "各メイン・サイドポットを半分ずつ両ボードに分配。奇数の1チップはAへ。"}同点の余りはボタン左から時計回り。未コール分は返却し、フォールドした人は受け取れません。
                 </p>
                 <p>
                   CPUは公開情報からの簡易シミュレーションを使用します。GTOソルバーではありません。CPUの破産した席は休止します。自分のスタックが0になった場合は、結果表示後にスコアを記録してトップ画面へ戻ります。

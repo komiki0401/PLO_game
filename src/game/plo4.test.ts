@@ -26,11 +26,11 @@ function shortTable(stacks: number[]) {
   return nextHand(previous, seeded(7));
 }
 
-describe("four-card double-board PLO", () => {
+describe("four-card single-board PLO", () => {
   it("deals four cards, posts only SB/BB and starts left of BB", () => {
     const s = create(settings, seeded(4));
     expect(s.street).toBe(-1);
-    expect(s.boards).toEqual([[], []]);
+    expect(s.boards).toEqual([[]]);
     expect(s.players.every(p => p.hole.length === 4)).toBe(true);
     expect(s.blinds).toEqual({ small: 1, big: 2 });
     expect(s.players.map(p => p.total)).toEqual([0, 50, 100, 0, 0, 0]);
@@ -47,7 +47,7 @@ describe("four-card double-board PLO", () => {
     s = act(s, { type: "check" });
     expect(s.street).toBe(0);
     expect(s.actor).toBe(1);
-    expect(s.boards.map(b => b.length)).toEqual([3, 3]);
+    expect(s.boards.map(b => b.length)).toEqual([3]);
     expect(s.players.every(p => p.bet === 0)).toBe(true);
     expect(s.high).toBe(0);
     assertState(s);
@@ -67,7 +67,7 @@ describe("four-card double-board PLO", () => {
     s = act(s, { type: "fold" });
     expect(s.done).toBe(true);
     expect(s.awards).toEqual([]);
-    expect(s.boards).toEqual([[], []]);
+    expect(s.boards).toEqual([[]]);
     expect(s.players.map(p => p.stack)).toEqual([9950, 10050]);
     assertState(s);
     s = nextHand(s, seeded(3));
@@ -85,7 +85,10 @@ describe("four-card double-board PLO", () => {
     const s = shortTable([1000, 25]);
     expect(s.done).toBe(true);
     expect(s.players.map(p => p.total)).toEqual([25, 25]);
-    expect(s.boards.map(b => b.length)).toEqual([5, 5]);
+    expect(s.boards.map(b => b.length)).toEqual([5]);
+    expect(s.awards).toHaveLength(1);
+    expect(s.awards[0]).toMatchObject({ board: 0, amount: 50 });
+    expect(Object.values(s.payouts).reduce((sum, value) => sum + value, 0)).toBe(50);
     assertState(s);
     const allIn = shortTable([25, 25, 25]);
     let end = allIn;
@@ -124,8 +127,8 @@ describe("four-card double-board PLO", () => {
       while (!s.done && count++ < 200) { s = act(s, cpu(s, rng)); assertState(s); }
       expect(s.done).toBe(true);
     }
-    expect(nuts([0, 1, 2, 3], [[], []])).toBe(0);
-    const sample = estimate([0, 1, 2, 3], [[], []], 3, 5, seeded(19));
+    expect(nuts([0, 1, 2, 3], [[]])).toBe(0);
+    const sample = estimate([0, 1, 2, 3], [[]], 3, 5, seeded(19));
     expect(sample.equity).toBeGreaterThanOrEqual(0);
     expect(sample.equity).toBeLessThanOrEqual(1);
   });
@@ -142,7 +145,7 @@ describe("four-card double-board PLO", () => {
         assertState(s);
       }
       expect(s.done).toBe(true);
-      if (s.awards.length) expect(s.boards.map(b => b.length)).toEqual([5, 5]);
+      if (s.awards.length) expect(s.boards.map(b => b.length)).toEqual([5]);
     }
   });
   it("keeps old scores readable and labels new four-card sessions", () => {

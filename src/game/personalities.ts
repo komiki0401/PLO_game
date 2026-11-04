@@ -39,7 +39,7 @@ export const personalities: readonly Personality[] = [
   },
   {
     name: "SORA", style: "cautious", label: "慎重撤退型", badge: "慎重",
-    description: "ボードの役がツーペア以下（PLOは両ボードとも）なら、強いドローがない限り大きめのベットに降りやすいタイプ。",
+    description: "ボードの役がツーペア以下（2ボードの場合は両方とも）なら、強いドローがない限り大きめのベットに降りやすいタイプ。",
     callFloor: 0.43, oddsFactor: 1.45, raiseThreshold: 0.8,
     raiseChance: 0.45, bluff: 0, sizing: 0.65,
   },

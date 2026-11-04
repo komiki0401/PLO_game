@@ -103,7 +103,7 @@ export function HomeScreen({
               <h3 id="omaha-title">オマハ</h3>
               <button type="button" aria-pressed={fourCard} onClick={() => setDraft({ ...draft, mode: "plo4" })}>
                 <strong>PLO4・プリフロップ</strong>
-                <span>手札4枚 · SB / BB · プリフロップから</span>
+                <span>手札4枚 · ボード1組 · SB / BB · プリフロップから</span>
               </button>
               <button type="button" aria-pressed={!blinds} onClick={() => setDraft({ ...draft, mode: "plo5" })}>
                 <strong>PLO5・Wボードボムポット</strong>
@@ -111,7 +111,7 @@ export function HomeScreen({
               </button>
             </div>
           </div>
-          <p className="mode-note">{holdem ? "標準のテキサスホールデム。スタック全額までレイズ可能。" : "PLOはダブルボード・ポットリミット。"}{blinds ? `SB ${fmt(Math.max(1, Math.floor(draft.ante / 2)))} / BB ${fmt(draft.ante)}、アンティなし。` : "既存の5枚ルールで遊べます。"}</p>
+          <p className="mode-note">{holdem ? "標準のテキサスホールデム。スタック全額までレイズ可能。" : fourCard ? "PLO4はシングルボード・ポットリミット。" : "PLO5はダブルボード・ポットリミット。"}{blinds ? `SB ${fmt(Math.max(1, Math.floor(draft.ante / 2)))} / BB ${fmt(draft.ante)}、アンティなし。` : "既存の5枚ルールで遊べます。"}</p>
           <form
             id="home-table-form"
             onSubmit={(e) => {

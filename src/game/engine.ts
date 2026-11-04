@@ -125,7 +125,7 @@ export function nextHand(previous: State, rng = Math.random): State {
   s.log = [`HAND #${s.hand} · ${holdem ? "NO LIMIT HOLD’EM · PREFLOP" : preflop ? "PLO4 · PREFLOP" : "BOMB POT"}`];
   s.blinds = undefined;
   s.deck = deck(rng);
-  s.boards = holdem ? [[]] : [[], []];
+  s.boards = preflop ? [[]] : [[], []];
   if (holdem) s.burns = [];
   do {
     s.dealer = (s.dealer + 1) % s.players.length;

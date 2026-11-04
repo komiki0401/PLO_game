@@ -17,7 +17,7 @@ test("choose PLO4, play two hands, keep scores and return to the original PLO5",
   await page.getByRole("button", { name: "ゲームを始める", exact: true }).click();
   await expect(page.locator(".street")).toHaveText("PREFLOP");
   await expect(page.locator(".seat.human .hole-cards .card")).toHaveCount(4);
-  await expect(page.locator(".board-cards .card.empty")).toHaveCount(10);
+  await expect(page.locator(".board-cards .card.empty")).toHaveCount(5);
   await expect(page.getByLabel("合計ベット額", { exact: true })).toHaveAttribute("max", "300");
   await page.screenshot({ path: `test-results/plo4-preflop-${test.info().project.name}.png`, fullPage: true });
   for (let hand = 0; hand < 2; hand++) {
