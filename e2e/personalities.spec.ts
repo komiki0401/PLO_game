@@ -8,7 +8,7 @@ test("shows the five fixed CPU styles on the home screen, seats and rules in bot
   await page.getByText("CPUの個性を見る", { exact: true }).click();
   const names = ["AKIRA · 攻撃型", "LUNA · 超堅実型", "REN · 強役待ち型", "MIKA · 完全守備型", "SORA · 慎重撤退型"];
   for (const name of names) await expect(page.locator(".cpu-roster")).toContainText(name);
-  for (const mode of ["PLO5 · ボムポット", "PLO4 · プリフロップ"]) {
+  for (const mode of ["PLO5・Wボードボムポット", "PLO4・プリフロップ"]) {
     await page.getByRole("button", { name: mode }).click();
     await page.getByRole("button", { name: "ゲームを始める", exact: true }).click();
     await expect(page.locator(".npc-style")).toHaveCount(5);

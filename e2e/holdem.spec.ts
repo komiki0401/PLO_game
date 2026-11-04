@@ -10,7 +10,7 @@ test.beforeEach(async ({ page }) => {
 test("offers standard two-card single-board no-limit play and keeps both PLO games", async ({ page }, info) => {
   if (info.project.name === "mobile") await page.setViewportSize({ width: 320, height: 568 });
   await page.goto("/");
-  await page.getByRole("button", { name: "ホールデム · ノンリミット" }).click();
+  await page.getByRole("button", { name: "ホールデム・ノンリミット" }).click();
   await page.getByLabel("初期スタック").fill("10000");
   await page.clock.install();
   await page.clock.pauseAt(new Date(Date.now() + 10));
@@ -33,7 +33,7 @@ test("offers standard two-card single-board no-limit play and keeps both PLO gam
   await page.getByRole("button", { name: "ルール", exact: true }).click();
   await expect(page.getByRole("dialog")).toContainText("手札は0枚・1枚・2枚");
   await page.getByRole("button", { name: "テーブルに戻る", exact: true }).click();
-  for (const [mode, holes, boards] of [["PLO4 · プリフロップ", 4, 2], ["PLO5 · ボムポット", 5, 2]] as const) {
+  for (const [mode, holes, boards] of [["PLO4・プリフロップ", 4, 2], ["PLO5・Wボードボムポット", 5, 2]] as const) {
     await page.getByRole("button", { name: "トップへ", exact: true }).click();
     await page.getByRole("button", { name: mode }).click();
     await page.getByRole("button", { name: "ゲームを始める", exact: true }).click();
@@ -44,7 +44,7 @@ test("offers standard two-card single-board no-limit play and keeps both PLO gam
 test("plays two complete hold’em hands, shows five winning cards and saves the mode", async ({ page }) => {
   test.setTimeout(90000);
   await page.goto("/");
-  await page.getByRole("button", { name: "ホールデム · ノンリミット" }).click();
+  await page.getByRole("button", { name: "ホールデム・ノンリミット" }).click();
   await page.getByRole("button", { name: "ゲームを始める", exact: true }).click();
   for (let hand = 0; hand < 2; hand++) {
     let finished = false;
@@ -73,5 +73,5 @@ test("plays two complete hold’em hands, shows five winning cards and saves the
   expect(saved[0]).toMatchObject({ mode: "holdem", hands: 2, scoops: 0 });
   await page.reload();
   await expect(page.locator(".score-history tbody")).toContainText("NLH");
-  await expect(page.getByRole("button", { name: "ホールデム · ノンリミット" })).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByRole("button", { name: "ホールデム・ノンリミット" })).toHaveAttribute("aria-pressed", "true");
 });

@@ -44,7 +44,7 @@ export function HomeScreen({
   return (
     <main className="home-screen">
       <header className="home-header">
-        <span className="eyebrow">THE DOUBLE BOARD CLUB</span>
+        <span className="eyebrow">POKER CLUB</span>
         <a href="#score-records">スコア記録を見る ↓</a>
         <span className="play-money">
           <i />
@@ -56,22 +56,11 @@ export function HomeScreen({
           <span className="eyebrow">
             {holdem ? "2 CARDS · NO LIMIT · 1 BOARD" : `${fourCard ? "4 CARDS · PREFLOP" : "5 CARDS · BOMB POT"} · 2 BOARDS`}
           </span>
-          <img
-            className="home-logo"
-            src={`${import.meta.env.BASE_URL}branding/poker-logo.png`}
-            alt="POKER"
-            width="2172"
-            height="724"
-            fetchPriority="high"
-          />
-          <p className="eyebrow">
-            {holdem ? "TEXAS HOLD’EM · NO LIMIT" : fourCard ? "DOUBLE BOARD PLO4" : "DOUBLE BOARD PLO5"}
-          </p>
-          <h1>
-            {holdem ? "たった2枚から、" : "ふたつのボードに、"}
-            <br />
-            <em>ひとつの勝負を。</em>
+          <h1 className="home-brand-title">
+            <img className="home-logo" src={`${import.meta.env.BASE_URL}branding/poker-logo.png`}
+              alt="POKER" width="2172" height="724" fetchPriority="high" />
           </h1>
+          <p>2枚のホールデムと、4枚・5枚のオマハ。</p>
           <p>
             {holdem ? "手札2枚と共通の5枚から、最強の5枚を。" : fourCard ? "4枚の手札で、プリフロップから。" : "5枚の手札と、2つのボード。"}
             <br />
@@ -103,18 +92,24 @@ export function HomeScreen({
           <h2>ゲームを選ぶ</h2>
           <p>設定を選んでゲームを始めましょう。</p>
           <div className="game-picker" role="group" aria-label="ゲームを選ぶ">
-            <button type="button" aria-pressed={!blinds} onClick={() => setDraft({ ...draft, mode: "plo5" })}>
-              <strong>PLO5 · ボムポット</strong>
-              <span>手札5枚 · フロップから · 全員アンティ</span>
-            </button>
-            <button type="button" aria-pressed={fourCard} onClick={() => setDraft({ ...draft, mode: "plo4" })}>
-              <strong>PLO4 · プリフロップ</strong>
-              <span>手札4枚 · SB / BB · プリフロップから</span>
-            </button>
-            <button type="button" aria-pressed={holdem} onClick={() => setDraft({ ...draft, mode: "holdem" })}>
-              <strong>ホールデム · ノンリミット</strong>
-              <span>手札2枚 · ボード1組 · SB / BB</span>
-            </button>
+            <div className="game-family" role="group" aria-label="手札2枚">
+              <p className="game-family-label">手札2枚</p>
+              <button type="button" aria-pressed={holdem} onClick={() => setDraft({ ...draft, mode: "holdem" })}>
+                <strong>ホールデム・ノンリミット</strong>
+                <span>手札2枚 · ボード1組 · SB / BB</span>
+              </button>
+            </div>
+            <div className="game-family omaha-family" role="group" aria-labelledby="omaha-title">
+              <h3 id="omaha-title">オマハ</h3>
+              <button type="button" aria-pressed={fourCard} onClick={() => setDraft({ ...draft, mode: "plo4" })}>
+                <strong>PLO4・プリフロップ</strong>
+                <span>手札4枚 · SB / BB · プリフロップから</span>
+              </button>
+              <button type="button" aria-pressed={!blinds} onClick={() => setDraft({ ...draft, mode: "plo5" })}>
+                <strong>PLO5・Wボードボムポット</strong>
+                <span>手札5枚 · フロップから · 全員アンティ</span>
+              </button>
+            </div>
           </div>
           <p className="mode-note">{holdem ? "標準のテキサスホールデム。スタック全額までレイズ可能。" : "PLOはダブルボード・ポットリミット。"}{blinds ? `SB ${fmt(Math.max(1, Math.floor(draft.ante / 2)))} / BB ${fmt(draft.ante)}、アンティなし。` : "既存の5枚ルールで遊べます。"}</p>
           <form

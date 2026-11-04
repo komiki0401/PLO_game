@@ -2086,6 +2086,18 @@ header {
   gap: 10px;
   margin: 18px 0 12px;
 }
+.home-hero h1.home-poker-title {
+  font-size: clamp(46px, 6vw, 76px);
+  font-weight: 600;
+  color: #ead49d;
+  letter-spacing: 0.12em;
+  margin: 20px 0;
+}
+.game-family { display: grid; gap: 10px; }
+.home-setup .game-family-label { margin: 0; font-size: 11px; color: #adc5b6; }
+.omaha-family { margin-top: 12px; padding-top: 20px; border-top: 1px solid #c8ad7255; }
+.omaha-family h3 { margin: 0 0 3px; color: #ead49d; font-size: 18px; }
+.game-family button { width: 100%; }
 .game-picker button {
   display: grid;
   gap: 6px;
@@ -2750,19 +2762,6 @@ header {
   top: -6px;
   font-size: 8px;
 }
-.board-position {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 12px;
-}
-.dealer-position {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  color: #f5e5ad;
-  white-space: nowrap;
-}
 .dealer-disc {
   display: grid;
   place-items: center;
@@ -2776,11 +2775,37 @@ header {
   color: #1b302a;
   font: bold 19px/1 Georgia, serif;
 }
-.dealer-owner { font-size: 10px; font-weight: 700; letter-spacing: 0.5px; }
+.hole-card-fan { position: relative; display: flex; gap: inherit; width: max-content; }
+.game-viewport .hole-card-fan .dealer {
+  position: absolute;
+  top: 50%;
+  left: calc(100% + 8px);
+  right: auto;
+  transform: translateY(-50%);
+  width: 28px;
+  height: 28px;
+  font-size: 18px;
+  z-index: 5;
+}
+.game-viewport .seat-4 .hole-card-fan .dealer,
+.game-viewport .seat-5 .hole-card-fan .dealer {
+  left: auto;
+  right: calc(100% + 8px);
+}
+.game-viewport .seat-2 .hole-card-fan .dealer,
+.game-viewport .seat-3 .hole-card-fan .dealer,
+.game-viewport .seat-4 .hole-card-fan .dealer { transform: translateY(calc(-50% - 6px)); }
+.seat.has-dealer.folded { opacity: 1; }
+.seat.has-dealer.folded > .seat-top,
+.seat.has-dealer.folded > .chip-rack,
+.seat.has-dealer.folded > .seat-status,
+.seat.has-dealer.folded .hole-card-fan > .card { opacity: 0.42; }
 @media (max-width: 780px) {
-  .board-position { gap: 9px; }
-  .dealer-disc { width: 24px; height: 24px; flex-basis: 24px; font-size: 16px; }
-  .dealer-owner { font-size: 9px; }
+  .game-viewport .hole-card-fan .dealer { width: 22px; height: 22px; font-size: 15px; }
+  .game-viewport .seat-1 .hole-card-fan .dealer,
+  .game-viewport .seat-5 .hole-card-fan .dealer { width: 16px; height: 16px; font-size: 12px; }
+  .game-viewport .seat-1 .hole-card-fan .dealer { left: calc(100% + 3px); }
+  .game-viewport .seat-5 .hole-card-fan .dealer { right: calc(100% + 3px); }
 }
 .game-viewport .action-panel {
   flex: none;
