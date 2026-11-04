@@ -42,7 +42,16 @@ for (const hero of [true, false]) {
     expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(page.viewportSize()!.width);
     await page.clock.runFor(2400);
     await expect(page.locator(".scoop-celebration")).toHaveCount(0);
-    await page.locator(".results button").first().click();
-    await expect(page.locator(".scoop-celebration")).toHaveCount(0);
+    if (hero) {
+      await expect(page.locator(".loss-overlay")).toHaveCount(0);
+      await page.locator(".results button").first().click();
+      await expect(page.locator(".scoop-celebration")).toHaveCount(0);
+    } else {
+      await expect(page.locator(".loss-overlay")).toContainText("You lose...");
+      await page.clock.runFor(2999);
+      await expect(page.locator(".home-screen")).toHaveCount(0);
+      await page.clock.runFor(1);
+      await expect(page.locator(".home-screen")).toBeVisible();
+    }
   });
 }
