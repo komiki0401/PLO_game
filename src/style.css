@@ -3854,3 +3854,32 @@ header {
   .game-viewport .seat-identity { width: 18px; height: 18px; flex-basis: 18px; }
   .game-viewport .long-stack .seat-identity { width: 22px; height: 22px; }
 }
+
+.home-hero .home-brand-title { margin: 0; line-height: 1; }
+.loss-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: radial-gradient(ellipse at center, #25151bec, #030b0df5 75%);
+  backdrop-filter: blur(5px);
+  animation: loss-fade-in 600ms ease-out both;
+}
+.loss-message { display: grid; justify-items: center; gap: 18px; text-align: center; }
+.loss-message strong {
+  font: italic 700 clamp(48px, 12vw, 112px)/1.15 Georgia, serif;
+  color: #efd8bc;
+  text-shadow: 0 0 36px #c46d5144;
+  animation: loss-title-in 900ms ease-out both;
+}
+.loss-spade { font-size: 60px; color: #a98563; animation: loss-spade-fall 1600ms ease-out both; }
+.loss-message > span:not(.loss-spade) { color: #d9c9ba; font-size: 15px; }
+.loss-message small { color: #a89b91; font-size: 12px; }
+@keyframes loss-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes loss-title-in { from { opacity: 0; transform: translateY(16px); letter-spacing: 8px; } to { opacity: 1; transform: translateY(0); letter-spacing: 0; } }
+@keyframes loss-spade-fall { from { opacity: 0; transform: translateY(-35px) rotate(-15deg); } to { opacity: .65; transform: translateY(0) rotate(8deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .loss-overlay, .loss-message strong, .loss-spade { animation: none; }
+}

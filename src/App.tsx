@@ -400,11 +400,14 @@ export default function App() {
   const highlighted = new Set(activeStep?.hand.cards ?? []);
   const sessionOver = game.players.filter((p) => p.stack > 0).length < 2;
   const gameOver = game.done && (game.players[0].stack === 0 || sessionOver);
+  const showLoss = screen === "table" && !replay && game.done &&
+    game.players[0].stack === 0 && showdownComplete && !allIn.cutIn && celebration !== game;
   useEffect(() => {
     if (screen !== "table" || replay || !gameOver || !showdownComplete) return;
+    if (game.players[0].stack === 0 && !showLoss) return;
     const timer = setTimeout(returnHome, 3000);
     return () => clearTimeout(timer);
-  }, [screen, game, replay, gameOver, showdownComplete]);
+  }, [screen, game, replay, gameOver, showdownComplete, showLoss]);
   function persistScore(record: ScoreRecord) {
     const updated = upsertScore(scoreList.current, record);
     scoreList.current = updated;
@@ -1031,6 +1034,16 @@ export default function App() {
                 </>
               )}
             </section>
+            {showLoss && (
+              <div className="loss-overlay" role="status" aria-live="polite">
+                <div className="loss-message">
+                  <span className="loss-spade" aria-hidden="true">♠</span>
+                  <strong>You lose...</strong>
+                  <span>チップが0になりました</span>
+                  <small>タイトル画面に戻ります</small>
+                </div>
+              </div>
+            )}
             {celebration === view && !replay && scoop && (
               <ScoopCelebration
                 winner={view.players[sole].name}

@@ -58,6 +58,7 @@ test("starts at home, waits for play, returns after a bust and preserves the sco
   for (let i = 0; i < 3; i++) await page.clock.runFor(1600);
   await expect(page.getByRole("heading", { name: /GAME OVER/ })).toBeVisible();
   await expect(page.locator(".home-screen")).toHaveCount(0);
+  await expect(page.locator(".loss-overlay")).toContainText("You lose...");
   await page.clock.runFor(2999);
   await expect(page.locator(".arena")).toBeVisible();
   await page.clock.runFor(1);
@@ -106,6 +107,7 @@ test("a positive all-in payout stays playable, records once and survives reload"
   ).toBeVisible();
   await page.clock.runFor(5000);
   await expect(page.locator(".arena")).toBeVisible();
+  await expect(page.locator(".loss-overlay")).toHaveCount(0);
   let records = await page.evaluate(() =>
     JSON.parse(localStorage.getItem("plo-scores-v1")!),
   );
@@ -151,6 +153,7 @@ test("being all-in with zero chips does not exit an unfinished hand", async ({
   await expect(page.locator(".arena")).toBeVisible();
   await expect(page.locator(".street")).toHaveText("FLOP");
   await page.clock.runFor(100);
+  await expect(page.locator(".loss-overlay")).toHaveCount(0);
   await expect(page.locator(".home-screen")).toHaveCount(0);
   await page.getByRole("button", { name: "トップへ", exact: true }).click();
   const records = await page.evaluate(() =>
