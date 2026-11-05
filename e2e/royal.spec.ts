@@ -21,6 +21,7 @@ test("labels the heart royal from the reported cards in showdown, results and re
     (window as unknown as { resetRoyalShuffle: () => void }).resetRoyalShuffle = () => { n = 0; };
   });
   await page.goto("/");
+  await page.getByRole("button", { name: "PLO5・Wボードボムポット" }).click();
   await page.clock.install();
   await page.clock.pauseAt(new Date(Date.now() + 10));
   await page.evaluate(() => (window as unknown as { resetRoyalShuffle: () => void }).resetRoyalShuffle());

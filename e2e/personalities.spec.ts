@@ -6,7 +6,7 @@ test("shows the five fixed CPU styles on the home screen, seats and rules in bot
   await page.addInitScript(() => localStorage.setItem("plo-settings", JSON.stringify({ count: 6, sound: false, voice: false, speed: 4 })));
   await page.goto("/");
   await page.getByText("CPUの個性を見る", { exact: true }).click();
-  const names = ["AKIRA · 攻撃型", "LUNA · 超堅実型", "REN · 強役待ち型", "MIKA · 完全守備型", "SORA · 慎重撤退型"];
+  const names = ["AKIRA · 攻撃型", "LUNA · 堅実型", "REN · 積極加圧型", "MIKA · フロップ参加型", "SORA · ブラフ混合型"];
   for (const name of names) await expect(page.locator(".cpu-roster")).toContainText(name);
   for (const mode of ["PLO5・Wボードボムポット", "PLO4・プリフロップ"]) {
     await page.getByRole("button", { name: mode }).click();
@@ -16,7 +16,7 @@ test("shows the five fixed CPU styles on the home screen, seats and rules in bot
     await page.screenshot({ path: `test-results/cpu-styles-${mode.startsWith("PLO4") ? "plo4" : "plo5"}-${test.info().project.name}.png` });
     await page.getByRole("button", { name: "ルール", exact: true }).click();
     await page.getByText("CPUの個性を見る", { exact: true }).click();
-    await expect(page.locator(".cpu-roster")).toContainText("MIKA · 完全守備型");
+    await expect(page.locator(".cpu-roster")).toContainText("MIKA · フロップ参加型");
     await page.getByRole("button", { name: "テーブルに戻る", exact: true }).click();
     await page.getByRole("button", { name: "トップへ", exact: true }).click();
   }

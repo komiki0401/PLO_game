@@ -80,7 +80,7 @@ export function cpu(s: State, rng = Math.random): Action {
   const sample = estimate(
     p.hole,
     s.boards,
-    level === "HARD" ? 32 : level === "NORMAL" ? 10 : 3,
+    level === "HARD" ? 48 : level === "NORMAL" ? 20 : 8,
     level === "HARD" ? opponents : 1,
     rng,
   );
@@ -112,39 +112,40 @@ export function chooseCpuAction(s: State, read: CpuRead, rng = Math.random): Act
   const pot = s.players.reduce((n, p) => n + p.total, 0),
     odds = l.call / (pot + l.call || 1);
   const postflop = s.boards.every(board => board.length >= 3);
-  const weakBoth = postflop && read.categories.every(category => category <= 2);
-  const strongMade = postflop && read.categories.some(category => category >= 4);
-  // A category alone is not a win: the other board, draws and pot odds matter.
-  // Checking is always free, even for the most cautious opponent.
-  if (l.canFold && profile.style === "cautious" && weakBoth &&
-      odds >= 0.1 && read.equity < 0.66 && read.nutShare === 0)
-    return { type: "fold" };
+  const opponents = s.players.filter(o => !o.folded && o.id !== p.id).length;
+  // HARD samples the whole field; the other levels sample a heads-up opponent.
+  // Scale value thresholds to that field without inflating calling equity.
+  const fieldScale = level === "HARD" ? 2 / (opponents + 1) : 1;
   const callThreshold = Math.max(
-    profile.callFloor - (postflop ? 0 : 0.06) - (level === "EASY" ? 0.06 : 0),
-    odds * profile.oddsFactor * (level === "EASY" ? 0.8 : 1),
+    profile.callFloor * fieldScale * Math.min(1, odds / 0.3),
+    odds * profile.oddsFactor * (level === "EASY" ? 0.85 : 1),
   );
-  if (
-    l.canFold && strength < callThreshold &&
-    (profile.style !== "aggressive" || rng() > 0.12)
-  )
-    return { type: "fold" };
-  if (profile.style === "defender")
-    return l.canCheck ? { type: "check" } : { type: "call" };
-  const canValueRaise = profile.style === "hunter"
-    ? strongMade && (strength >= profile.raiseThreshold || read.nutShare > 0)
-    : strength >= profile.raiseThreshold;
-  const bluff = profile.bluff * (level === "EASY" ? 0.5 : level === "HARD" ? 1.25 : 1);
+  const blind = s.settings.ante;
+  const cheapPreflop = !postflop && l.call <= blind * 2 &&
+    l.call <= (p.stack + p.bet) * 0.08 && odds <= 0.4;
   const sizing = betSizing(l);
-  if (
-    sizing.canRaise &&
-    ((canValueRaise && rng() < profile.raiseChance) || (bluff > 0 && rng() < bluff))
-  ) {
-    const fraction = Math.min(1, profile.sizing + (read.scoop > 0.65 ? 0.15 : 0));
-    const target = Math.max(
-      l.min,
-      Math.min(l.max, s.high + Math.floor((pot + l.call) * fraction)),
-    );
-    return { type: "raise", to: sizing.normalize(target) };
+  const canValueRaise = strength >= Math.max(profile.raiseThreshold * fieldScale, odds * profile.oddsFactor);
+  // Try a limited bluff before deciding to fold: air must sometimes put money
+  // in. Avoid bluffing into expensive pressure or repeatedly risking a stack.
+  const bluffChance = profile.bluff * (postflop ? 1 : 0.45) /
+    (1 + Math.max(0, opponents - 1) * 0.6);
+  const canBluff = odds <= 0.35 && l.call <= p.stack * 0.18;
+  const valueRaise = sizing.canRaise && canValueRaise && rng() < profile.raiseChance;
+  const bluffRaise = sizing.canRaise && !valueRaise && canBluff && rng() < bluffChance;
+  if (valueRaise || bluffRaise) {
+    const fraction = bluffRaise
+      ? 0.3 + rng() * 0.3
+      : Math.min(1, profile.sizing * (0.7 + rng() * 0.6));
+    const target = Math.max(l.min,
+      Math.min(l.max, s.high + Math.floor((pot + l.call) * fraction)));
+    // Do not turn a small bluff into a mandatory huge minimum raise/all-in.
+    const to = sizing.normalize(target);
+    if (valueRaise || to - p.bet <= p.stack * 0.25)
+      return { type: "raise", to };
+  }
+  if (l.canFold && strength < callThreshold) {
+    if (cheapPreflop && rng() < profile.speculate) return { type: "call" };
+    return { type: "fold" };
   }
   return l.canCheck ? { type: "check" } : { type: "call" };
 }

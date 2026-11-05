@@ -16,6 +16,7 @@ for (const hero of [true, false]) {
     expect(seed).toBeGreaterThan(0);
     await page.addInitScript(({ settings }) => localStorage.setItem("plo-settings", JSON.stringify(settings)), { settings });
     await page.goto("/");
+  await page.getByRole("button", { name: "PLO5・Wボードボムポット" }).click();
     await page.clock.install();
     await page.clock.pauseAt(new Date(Date.now() + 10));
     await page.evaluate(value => {

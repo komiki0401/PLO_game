@@ -6,6 +6,7 @@ test.afterEach(async ({ page }) => {
 test.setTimeout(60000);
 async function openTable(page: Page) {
   await page.goto("/");
+  await page.getByRole("button", { name: "PLO5・Wボードボムポット" }).click();
   await page
     .getByRole("button", { name: "ゲームを始める", exact: true })
     .click();
@@ -274,14 +275,14 @@ test("human call and raise use the female action voice", async ({ page }) => {
     await page.getByLabel("ボムポットアンティ").fill("100");
     await page.getByLabel("CPU難易度").selectOption("EASY");
     await page.getByLabel("アニメーション速度").selectOption("4");
-    await page.evaluate(() => {
-      let seed = 2;
+    await page.getByRole("button", { name: "設定を適用して開始 →" }).evaluate((button: HTMLButtonElement) => {
+      let seed = 4;
       Math.random = () => {
         seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
         return seed / 4294967296;
       };
+      button.click();
     });
-    await page.getByRole("button", { name: "設定を適用して開始 →" }).click();
     await expect(page.getByRole("button", { name: /^Call / })).toBeVisible({
       timeout: 10000,
     });

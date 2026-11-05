@@ -1,6 +1,6 @@
 export type Personality = {
   name: string;
-  style: "aggressive" | "rock" | "hunter" | "defender" | "cautious" | "balanced";
+  style: "aggressive" | "rock" | "pressure" | "caller" | "tricky" | "balanced";
   label: string;
   badge: string;
   description: string;
@@ -10,47 +10,48 @@ export type Personality = {
   raiseChance: number;
   bluff: number;
   sizing: number;
+  speculate: number;
 };
 
 export const personalities: readonly Personality[] = [
   {
     name: "AKIRA", style: "aggressive", label: "攻撃型", badge: "攻撃",
-    description: "広めに参加し、大きなベットやレイズで圧力をかけます。ブラフも多め。",
-    callFloor: 0.18, oddsFactor: 0.8, raiseThreshold: 0.48,
-    raiseChance: 0.82, bluff: 0.16, sizing: 0.85,
+    description: "広めに参加し、大きめのベットやレイズで圧力。弱い手のブラフも混ぜます。",
+    callFloor: 0.18, oddsFactor: 0.78, raiseThreshold: 0.48,
+    raiseChance: 0.8, bluff: 0.18, sizing: 0.8, speculate: 0.65,
   },
   {
-    name: "LUNA", style: "rock", label: "超堅実型", badge: "超堅",
-    description: "参加する手を厳しく選び、弱い手では早めに撤退。レイズは強い手が中心。",
-    callFloor: 0.5, oddsFactor: 1.6, raiseThreshold: 0.84,
-    raiseChance: 0.35, bluff: 0.003, sizing: 0.5,
+    name: "LUNA", style: "rock", label: "堅実型", badge: "堅実",
+    description: "強い手を厳選する堅実派。ただし安いコールはポットオッズに合わせて参加します。",
+    callFloor: 0.44, oddsFactor: 1.2, raiseThreshold: 0.8,
+    raiseChance: 0.4, bluff: 0.015, sizing: 0.5, speculate: 0.12,
   },
   {
-    name: "REN", style: "hunter", label: "強役待ち型", badge: "強役",
-    description: "普段は堅く、ストレート以上の完成役と勝ち目がそろうと大きくレイズ。プリフロップはレイズしません。",
-    callFloor: 0.4, oddsFactor: 1.3, raiseThreshold: 0.65,
-    raiseChance: 0.94, bluff: 0, sizing: 0.9,
+    name: "REN", style: "pressure", label: "積極加圧型", badge: "加圧",
+    description: "AKIRAに並ぶ積極派。プリフロップからレイズし、完成前の手でもベットして主導権を狙います。",
+    callFloor: 0.2, oddsFactor: 0.85, raiseThreshold: 0.46,
+    raiseChance: 0.85, bluff: 0.22, sizing: 0.65, speculate: 0.7,
   },
   {
-    name: "MIKA", style: "defender", label: "完全守備型", badge: "守備",
-    description: "自分からベット・レイズはせず、チェック・コール中心。割に合わない勝負は降ります。",
-    callFloor: 0.42, oddsFactor: 1.65, raiseThreshold: 1,
-    raiseChance: 0, bluff: 0, sizing: 0,
+    name: "MIKA", style: "caller", label: "フロップ参加型", badge: "参加",
+    description: "安いレイズなら広くコールしてフロップへ。以降は役・勝率と支払額で判断し、強い手ではレイズもします。",
+    callFloor: 0.18, oddsFactor: 0.85, raiseThreshold: 0.72,
+    raiseChance: 0.35, bluff: 0.035, sizing: 0.45, speculate: 0.9,
   },
   {
-    name: "SORA", style: "cautious", label: "慎重撤退型", badge: "慎重",
-    description: "ボードの役がツーペア以下（2ボードの場合は両方とも）なら、強いドローがない限り大きめのベットに降りやすいタイプ。",
-    callFloor: 0.43, oddsFactor: 1.45, raiseThreshold: 0.8,
-    raiseChance: 0.45, bluff: 0, sizing: 0.65,
+    name: "SORA", style: "tricky", label: "ブラフ混合型", badge: "策略",
+    description: "役なしでもベットやレイズを混ぜる策略派。少人数ではブラフを増やし、大きな反撃には撤退もします。",
+    callFloor: 0.24, oddsFactor: 0.95, raiseThreshold: 0.6,
+    raiseChance: 0.65, bluff: 0.3, sizing: 0.6, speculate: 0.6,
   },
 ];
 
 const balanced: Personality = {
   name: "YOU", style: "balanced", label: "標準型", badge: "標準",
-  description: "標準的な判断。", callFloor: 0.2, oddsFactor: 1.2,
-  raiseThreshold: 0.67, raiseChance: 0.65, bluff: 0.035, sizing: 0.5,
+  description: "標準的な判断。", callFloor: 0.2, oddsFactor: 1.1,
+  raiseThreshold: 0.67, raiseChance: 0.65, bluff: 0.06, sizing: 0.5, speculate: 0.4,
 };
 
-// Seat IDs are stable across hands, including when a busted seat sits out.
+// Seat IDs stay stable across hands, including when a busted seat sits out.
 export const personalityFor = (id: number): Personality =>
   personalities[id - 1] ?? balanced;

@@ -26,6 +26,7 @@ test.beforeEach(async ({ page }) => {
 });
 async function start(page: Page) {
   await page.goto("/");
+  await page.getByRole("button", { name: "PLO5・Wボードボムポット" }).click();
   await page.getByRole("button", { name: "今すぐプレイ", exact: true }).click();
   await expect(page.locator("main")).toHaveClass(/human-turn/, {
     timeout: 15000,
@@ -113,6 +114,7 @@ test("all-in cut-in names the player, reads all-in and precedes showdown", async
   page,
 }) => {
   await page.goto("/");
+  await page.getByRole("button", { name: "PLO5・Wボードボムポット" }).click();
   await page.getByLabel("プレイヤー人数").selectOption("3");
   await page.getByLabel("初期スタック").fill("100");
   await page.getByLabel("ボムポットアンティ").fill("100");
@@ -153,6 +155,7 @@ test("a human all-in shows a cut-in and remains visibly marked at the seat", asy
   page,
 }) => {
   await page.goto("/");
+  await page.getByRole("button", { name: "PLO5・Wボードボムポット" }).click();
   await page.getByLabel("プレイヤー人数").selectOption("3");
   await page.getByLabel("初期スタック").fill("100");
   await page.getByLabel("ボムポットアンティ").fill("25");

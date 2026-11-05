@@ -40,36 +40,53 @@ describe("fixed NPC personalities", () => {
   });
   it("makes the rock fold marginal expensive calls that the attacker plays", () => {
     const marginal = { ...medium, equity: 0.35 };
-    expect(chooseCpuAction(facingBet(1), marginal, () => 0.5).type).not.toBe("fold");
-    expect(chooseCpuAction(facingBet(2), marginal, () => 0.5).type).toBe("fold");
+    expect(chooseCpuAction(facingBet(1, 500), marginal, () => 0.5).type).not.toBe("fold");
+    expect(chooseCpuAction(facingBet(2, 500), marginal, () => 0.5).type).toBe("fold");
   });
-  it("makes the hunter raise strong made hands but never bluff an unfinished hand or preflop", () => {
-    const s = facingBet(3);
-    let raises = 0;
-    for (let i = 0; i < 100; i++) {
-      const rng = seeded(i * 7919 + 7);
-      if (chooseCpuAction(s, strong, rng).type === "raise") raises++;
-      expect(chooseCpuAction(s, { ...strong, categories: [2, 2] }, () => 0).type).toBe("call");
-    }
-    expect(raises).toBeGreaterThan(85);
-    const preflop = create({ ...defaults, mode: "plo4" });
-    preflop.actor = 3;
-    expect(chooseCpuAction(preflop, { ...strong, categories: [-1, -1] }, () => 0).type).toBe("call");
-    expect(chooseCpuAction(s, { ...medium, categories: [4, 0], equity: 0.45 }, () => 0).type).toBe("call");
+  it("lets REN raise preflop and attack with unfinished hands", () => {
+    const s = create({ ...defaults, mode: "holdem" }, seeded(7));
+    s.actor = 3;
+    const action = chooseCpuAction(s, { ...medium, categories: [-1] }, () => 0);
+    expect(action.type).toBe("raise");
+    expect(chooseCpuAction(facingBet(3), medium, () => 0).type).toBe("raise");
   });
-  it("makes the defender check or call even the nuts, and fold bad value", () => {
-    expect(chooseCpuAction(facingBet(4), strong, () => 0).type).toBe("call");
-    expect(chooseCpuAction(facingBet(4, 0), strong, () => 0).type).toBe("check");
-    expect(chooseCpuAction(facingBet(4), { ...medium, equity: 0.1 }, () => 0).type).toBe("fold");
+  it("keeps cheap calls playable while still folding costly air", () => {
+    const air = { ...medium, equity: 0.08, categories: [0, 0] };
+    expect(chooseCpuAction(facingBet(2, 10), { ...air, equity: 0.12 }, () => 0.99).type).toBe("call");
+    for (let id = 1; id <= 5; id++)
+      expect(chooseCpuAction(facingBet(id, 5000), air, () => 0.99).type).toBe("fold");
   });
-  it("makes the cautious player release two pair to pressure but keep free checks and strong draws", () => {
-    const s = facingBet(5);
-    const twoPair = { ...medium, categories: [2, 2] };
-    expect(chooseCpuAction(s, twoPair, () => 0.9).type).toBe("fold");
-    expect(chooseCpuAction(s, { ...twoPair, equity: 0.8 }, () => 0.9).type).not.toBe("fold");
-    expect(chooseCpuAction(s, { ...twoPair, categories: [2, 4] }, () => 0.9).type).not.toBe("fold");
-    expect(chooseCpuAction(facingBet(5, 0), twoPair, () => 0.9).type).toBe("check");
-    expect(chooseCpuAction(facingBet(5, 10), twoPair, () => 0.9).type).toBe("call");
+  it("makes MIKA see cheap flops but does not apply that license on the river or against an all-in", () => {
+    const preflop = create({ ...defaults, mode: "holdem" }, seeded(8));
+    preflop.actor = 4;
+    preflop.high = 200;
+    preflop.players[0].bet = 200;
+    preflop.players[0].total = 200;
+    const weak = { ...medium, equity: 0.02, categories: [-1] };
+    const calls = Array.from({ length: 200 }, (_, i) =>
+      chooseCpuAction(preflop, weak, seeded(i * 7919 + 7)),
+    ).filter(a => a.type === "call").length;
+    expect(calls).toBeGreaterThan(150);
+    const costly = structuredClone(preflop);
+    costly.high = 5000;
+    costly.players[0].bet = costly.players[0].total = 5000;
+    expect(chooseCpuAction(costly, weak, () => 0.5).type).toBe("fold");
+    const river = facingBet(4, 200);
+    river.boards = [[0, 5, 10, 15, 20]];
+    expect(chooseCpuAction(river, { ...weak, categories: [0] }, () => 0.5).type).toBe("fold");
+  });
+  it("mixes air bets and bluffs with checks and folds, especially against fewer opponents", () => {
+    const air = { ...medium, equity: 0.04, scoop: 0, categories: [0, 0] };
+    const raises = (s: State) => Array.from({ length: 500 }, (_, i) =>
+      chooseCpuAction(s, air, seeded(i * 7919 + 7)),
+    ).filter(a => a.type === "raise").length;
+    const headsUp = facingBet(5, 0);
+    headsUp.players.forEach(p => { if (p.id !== 0 && p.id !== 5) p.folded = true; });
+    expect(raises(headsUp)).toBeGreaterThan(80);
+    expect(raises(headsUp)).toBeLessThan(200);
+    expect(raises(headsUp)).toBeGreaterThan(raises(facingBet(5, 0)));
+    expect(chooseCpuAction(facingBet(5, 100), air, () => 0).type).toBe("raise");
+    expect(chooseCpuAction(facingBet(5, 100), air, () => 0.99).type).toBe("fold");
   });
   it("never permits a personality to exceed the pot, raise without rights or fold a free check", () => {
     for (const profile of personalities) {
@@ -89,7 +106,7 @@ describe("fixed NPC personalities", () => {
       expect(chooseCpuAction(locked, strong, () => 0).type).not.toBe("raise");
     }
   });
-  it.each(["plo4", "plo5"] as const)("uses no hidden cards or undealt deck for any %s personality at any difficulty", mode => {
+  it.each(["holdem", "plo4", "plo5"] as const)("uses no hidden cards or undealt deck for any %s personality at any difficulty", mode => {
     for (const difficulty of ["EASY", "NORMAL", "HARD"] as const) {
       for (let id = 1; id <= 5; id++) {
         const s = create({ ...defaults, mode, difficulty }, seeded(9));
@@ -103,7 +120,7 @@ describe("fixed NPC personalities", () => {
       }
     }
   });
-  it.each(["plo4", "plo5"] as const)("completes a full six-seat %s hand with all five personalities at every difficulty", mode => {
+  it.each(["holdem", "plo4", "plo5"] as const)("completes a full six-seat %s hand with all five personalities at every difficulty", mode => {
     for (const difficulty of ["EASY", "NORMAL", "HARD"] as const) {
       const rng = seeded(17);
       let s = create({ ...defaults, mode, difficulty, stack: 1000 }, rng), steps = 0;
@@ -114,7 +131,7 @@ describe("fixed NPC personalities", () => {
       }
       expect(s.done).toBe(true);
       expect(s.players.reduce((n, p) => n + p.stack, 0)).toBe(s.initialTotal);
-      const cards = [...s.players.flatMap(p => p.hole), ...s.boards.flat(), ...s.deck];
+      const cards = [...s.players.flatMap(p => p.hole), ...s.boards.flat(), ...(s.burns ?? []), ...s.deck];
       expect(cards).toHaveLength(52);
       expect(new Set(cards).size).toBe(52);
     }

@@ -37,6 +37,7 @@ test("starts at home, waits for play, returns after a bust and preserves the sco
   page,
 }) => {
   await page.goto("/");
+  await page.getByRole("button", { name: "PLO5・Wボードボムポット" }).click();
   await expect(page.locator(".home-screen")).toBeVisible();
   await expect(page.locator(".arena")).toHaveCount(0);
   await page.clock.install();
@@ -82,6 +83,7 @@ test("starts at home, waits for play, returns after a bust and preserves the sco
   await expect(page.locator(".home-screen")).toBeVisible();
   await expect(page.locator(".score-history tbody tr")).toHaveCount(1);
   await expect(page.locator(".home-result strong")).toHaveText("0");
+  await page.getByRole("button", { name: "PLO5・Wボードボムポット" }).click();
   await page.getByLabel("初期スタック").fill("10000");
   await page.getByLabel("ボムポットアンティ").fill("100");
   await page
@@ -93,6 +95,7 @@ test("a positive all-in payout stays playable, records once and survives reload"
   page,
 }) => {
   await page.goto("/");
+  await page.getByRole("button", { name: "PLO5・Wボードボムポット" }).click();
   await page.clock.install();
   await page.clock.pauseAt(new Date(Date.now() + 10));
   await seed(page, 6);
@@ -134,6 +137,7 @@ test("being all-in with zero chips does not exit an unfinished hand", async ({
   page,
 }) => {
   await page.goto("/");
+  await page.getByRole("button", { name: "PLO5・Wボードボムポット" }).click();
   await page.getByLabel("ボムポットアンティ").fill("25");
   await seed(page, 1);
   await page
@@ -221,4 +225,16 @@ test("homepage layout and score history fit a narrow screen", async ({
   });
   await page.getByRole("button", { name: "今すぐプレイ", exact: true }).click();
   await expect(page.locator(".arena")).toBeVisible();
+});
+
+test("opens with Holdem selected while preserving saved table settings", async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem("plo-settings", JSON.stringify({
+    mode: "plo4", count: 3, stack: 12000, ante: 200, sound: false, voice: false,
+  })));
+  await page.goto("/");
+  await expect(page.getByRole("button", { name: "ホールデム・ノンリミット" })).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByLabel("初期スタック")).toHaveValue("12000");
+  await expect(page.getByLabel("ビッグブラインド")).toHaveValue("200");
+  await page.getByRole("button", { name: "PLO4・プリフロップ" }).click();
+  await expect(page.getByRole("button", { name: "PLO4・プリフロップ" })).toHaveAttribute("aria-pressed", "true");
 });

@@ -42,9 +42,10 @@ const loadSettings = (): Settings => {
     return {
       ...defaults,
       ...JSON.parse(localStorage.getItem("plo-settings") || "{}"),
+      mode: "holdem",
     };
   } catch {
-    return defaults;
+    return { ...defaults, mode: "holdem" };
   }
 };
 function PlayingCard({

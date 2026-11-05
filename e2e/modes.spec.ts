@@ -41,7 +41,7 @@ test("choose PLO4, play two hands, keep scores and return to the original PLO5",
   expect(records[0]).toMatchObject({ mode: "plo4", hands: 2 });
   await page.reload();
   await expect(page.locator(".score-history tbody")).toContainText("PLO4");
-  await expect(page.getByRole("button", { name: "PLO4・プリフロップ" })).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByRole("button", { name: "ホールデム・ノンリミット" })).toHaveAttribute("aria-pressed", "true");
   await page.getByRole("button", { name: "PLO5・Wボードボムポット" }).click();
   await page.getByRole("button", { name: "ゲームを始める", exact: true }).click();
   await expect(page.locator(".seat.human .hole-cards .card")).toHaveCount(5);

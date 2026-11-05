@@ -3,6 +3,7 @@ import { expect, test } from "@playwright/test";
 test("number input, slider and pot presets choose hundreds while keeping the SB call exact", async ({ page }) => {
   await page.addInitScript(() => localStorage.setItem("plo-settings", JSON.stringify({ mode: "plo4", count: 2, stack: 10000, ante: 100, sound: false, voice: false })));
   await page.goto("/");
+  await page.getByRole("button", { name: "PLO4・プリフロップ" }).click();
   await page.clock.install();
   await page.clock.pauseAt(new Date(Date.now() + 10));
   await page.getByRole("button", { name: "ゲームを始める", exact: true }).click();
