@@ -22,15 +22,36 @@ jobs:
       - run: npm audit --audit-level=high
       - run: npm test
       - run: npm run build
+        env:
+          VITE_ONLINE_SERVER_URL: ${{ vars.VITE_ONLINE_SERVER_URL }}
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
       - uses: actions/upload-pages-artifact@v3
         if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
         with:
           path: dist
+  online:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci
+      - run: npm run build:worker
+        env:
+          WRANGLER_SEND_METRICS: "false"
+      - run: npm run build
+        env:
+          VITE_ONLINE_SERVER_URL: http://127.0.0.1:8787
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e:online
+        env:
+          WRANGLER_SEND_METRICS: "false"
   deploy:
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
-    needs: build
+    needs: [build, online]
     runs-on: ubuntu-latest
     permissions:
       pages: write

@@ -1,0 +1,33 @@
+name: Deploy online poker server
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: online-worker-production
+  cancel-in-progress: false
+jobs:
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: online-production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run build:worker
+        env:
+          WRANGLER_SEND_METRICS: "false"
+      - name: Deploy Worker and SQLite Durable Objects
+        run: |
+          test -n "$CLOUDFLARE_API_TOKEN" || { echo "Set the CLOUDFLARE_API_TOKEN repository secret first."; exit 1; }
+          test -n "$CLOUDFLARE_ACCOUNT_ID" || { echo "Set the CLOUDFLARE_ACCOUNT_ID repository variable first."; exit 1; }
+          npm run deploy:online
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          WRANGLER_SEND_METRICS: "false"

@@ -23,6 +23,7 @@ export function HomeScreen({
   records,
   lastResult,
   onStart,
+  onOnline,
   error,
   storageError,
   totalHands,
@@ -31,6 +32,7 @@ export function HomeScreen({
   records: ScoreRecord[];
   lastResult: ScoreRecord | null;
   onStart: (settings: Settings) => void;
+  onOnline: () => void;
   error: string;
   storageError: boolean;
   totalHands: number;
@@ -67,6 +69,7 @@ export function HomeScreen({
             {blinds ? "ブラインドから始まるCPU戦を、プレイチップで。" : "CPUとのボムポットを、プレイチップで何度でも。"}
           </p>
           <div className="home-quick-start">
+            <button className="home-online-button" type="button" onClick={onOnline}>友達とオンライン対戦（最大6人）</button>
             <button
               className="primary"
               type="submit"
