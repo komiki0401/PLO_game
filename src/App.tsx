@@ -8,6 +8,7 @@ import {
   type State,
   type Settings,
 } from "./game/engine";
+import { OnlineScreen } from "./online/OnlineScreen";
 import { cpu } from "./game/cpu";
 import { cardText, suit, type Card } from "./game/cards";
 import { handName } from "./game/evaluate";
@@ -92,7 +93,7 @@ function readStats() {
   return { hands: 0, scoops: 0, net: 0 };
 }
 export default function App() {
-  const [screen, setScreen] = useState<"home" | "table">("home");
+  const [screen, setScreen] = useState<"home" | "table" | "online">(() => /^#room=[a-f0-9]{64}$/.test(location.hash) ? "online" : "home");
   const [scores, setScores] = useState(readScores),
     [storageError, setStorageError] = useState(false);
   const scoreList = useRef(scores),
@@ -511,12 +512,13 @@ export default function App() {
         hidden
         aria-label="女性ボイス読み上げ"
       />
-      {screen === "home" ? (
+      {screen === "online" ? <OnlineScreen onExit={() => setScreen("home")} /> : screen === "home" ? (
         <HomeScreen
           settings={settings}
           records={scores}
           lastResult={lastResult}
           onStart={startSession}
+          onOnline={() => setScreen("online")}
           error={error}
           storageError={storageError}
           totalHands={stats.hands}
