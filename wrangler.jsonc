@@ -1,0 +1,16 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "poker-friends",
+  "main": "worker/index.ts",
+  "compatibility_date": "2026-11-01",
+  "workers_dev": true,
+  "durable_objects": { "bindings": [{ "name": "ROOMS", "class_name": "PokerRoom" }] },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["PokerRoom"] }],
+  "vars": { "ALLOWED_ORIGINS": "https://komiki0401.github.io" },
+  "env": {
+    "local": {
+      "durable_objects": { "bindings": [{ "name": "ROOMS", "class_name": "PokerRoom" }] },
+      "vars": { "ALLOWED_ORIGINS": "http://localhost:5173,http://127.0.0.1:5173,http://127.0.0.1:4173" }
+    }
+  }
+}
